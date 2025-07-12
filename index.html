@@ -779,6 +779,10 @@
                 <i class="fas fa-plug"></i>
                 Connect to Sheet
             </button>
+            <button class="btn" onclick="showConnectionHelp()" style="background: #95a5a6; color: white; margin-top: 10px;">
+                <i class="fas fa-question-circle"></i>
+                Need Help?
+            </button>
         </div>
 
         <div class="sidebar-section">
@@ -959,6 +963,30 @@
             return parsedData;
         }
 
+        // Parse CSV data
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return [];
+            
+            const headers = lines[0].split(',').map(header => 
+                header.replace(/"/g, '').trim().toLowerCase().replace(/\s+/g, '')
+            );
+            
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(value => value.replace(/"/g, '').trim());
+                const row = {};
+                
+                headers.forEach((header, index) => {
+                    row[header] = values[index] || '';
+                });
+                
+                data.push(row);
+            }
+            
+            return data;
+        }
+
         // Helper function to populate column selectors based on sheet data headers
         function populateColumnSelectors() {
             if (sheetData.length === 0) return;
@@ -1015,7 +1043,7 @@
         // Connect to Google Sheets
         async function connectToSheet() {
             const sheetUrl = document.getElementById('sheetUrl').value;
-            const sheetName = document.getElementById('sheetName').value; // sheetName is not used in the new API endpoint
+            const sheetName = document.getElementById('sheetName').value || 'Sheet1';
 
             if (!sheetUrl) {
                 showNotification('Please enter a Google Sheets URL', 'error');
@@ -1045,45 +1073,55 @@
                     throw new Error('Invalid Google Sheets URL format');
                 }
 
-                // Using the Google Sheets JSON feed for public sheets
-                const url = `https://spreadsheets.google.com/feeds/list/${sheetId}/od6/public/values?alt=json`;
-
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                // Try the CSV export method first (more reliable)
+                const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+                
+                try {
+                    const response = await fetch(csvUrl);
+                    if (response.ok) {
+                        const csvText = await response.text();
+                        sheetData = parseCSV(csvText);
+                    } else {
+                        throw new Error('CSV method failed');
+                    }
+                } catch (csvError) {
+                    // Fallback to JSON method
+                    const jsonUrl = `https://spreadsheets.google.com/feeds/list/${sheetId}/od6/public/values?alt=json`;
+                    const response = await fetch(jsonUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}. Make sure the sheet is published to the web.`);
+                    }
+                    
+                    const jsonData = await response.json();
+                    if (!jsonData.feed || !jsonData.feed.entry) {
+                        throw new Error('No data found. Make sure the sheet is published to the web and contains data.');
+                    }
+                    
+                    sheetData = parseJSON(jsonData);
                 }
-                const jsonData = await response.json();
-
-                if (!jsonData.feed || !jsonData.feed.entry) {
-                    throw new Error('No data found in the sheet or sheet is not public');
-                }
-
-                sheetData = parseJSON(jsonData);
 
                 if (sheetData.length === 0) {
-                    throw new Error('Sheet appears to be empty');
+                    throw new Error('Sheet appears to be empty or has no data rows');
                 }
 
                 updateConnectionStatus(true);
                 populateColumnSelectors();
                 showDataPreview();
                 showNotification('Successfully connected to Google Sheets!', 'success');
+                
             } catch (error) {
                 console.error('Connection Error:', error);
                 let errorMessage = 'Failed to connect to Google Sheet. ';
                 
                 if (error.message.includes('Invalid Google Sheets URL')) {
                     errorMessage += 'Please check the URL format.';
-                } else if (error.message.includes('not public')) {
-                    errorMessage += 'Make sure the sheet is publicly accessible and shared with "Anyone with the link".';
+                } else if (error.message.includes('published to the web')) {
+                    errorMessage += 'Please publish the sheet to the web: File → Share → Publish to the web.';
                 } else if (error.message.includes('empty')) {
                     errorMessage += 'The sheet appears to be empty.';
-                } else if (error.message.includes('HTTP error! status: 400')) {
-                    errorMessage += 'Bad request. This might be due to an incorrect sheet ID or a private sheet.';
-                } else if (error.message.includes('HTTP error! status: 404')) {
-                    errorMessage += 'Sheet not found. Please verify the sheet ID.';
                 } else {
-                    errorMessage += 'Please check the URL and sharing settings.';
+                    errorMessage += 'Please ensure the sheet is published to the web and try again.';
                 }
                 
                 showNotification(errorMessage, 'error');
@@ -1516,6 +1554,22 @@
                     notification.remove();
                 }, { once: true });
             }, 3000);
+        }
+
+        // Show detailed connection instructions
+        function showConnectionHelp() {
+            const helpMessage = `
+            To connect to Google Sheets:
+            1. Open your Google Sheet
+            2. Go to File → Share → Publish to the web
+            3. Choose "Entire Document" or specific sheet
+            4. Click "Publish"
+            5. Copy the sheet URL and paste it here
+            
+            Note: The sheet must be published to the web, not just shared with a link.
+            `;
+            
+            showNotification(helpMessage, 'warning');
         }
 
         // Example usage:
