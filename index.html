@@ -1213,31 +1213,18 @@
                 case 'pie':
                 case 'doughnut':
                 case 'polarArea':
-                    const labelColumn = selectedColumns[0];
-                    const dataColumn = selectedColumns[1];
-
-                    if (!labelColumn || !dataColumn) {
-                        console.error('Pie/Doughnut/PolarArea requires at least two columns (one for labels, one for data).');
-                        return { labels: [], datasets: [] };
-                    }
-
-                    const groupedData = {};
-                    sheetData.forEach(row => {
-                        const key = row[labelColumn] || 'Unknown';
-                        if (!groupedData[key]) {
-                            groupedData[key] = 0;
-                        }
-                        groupedData[key] += parseFloat(row[dataColumn] || 0);
+                    const data = selectedColumns.map(col => {
+                        return sheetData.reduce((sum, row) => sum + parseFloat(row[col] || 0), 0);
                     });
 
                     datasets.push({
-                        data: Object.values(groupedData),
-                        backgroundColor: colors.slice(0, Object.keys(groupedData).length),
+                        data: data,
+                        backgroundColor: colors.slice(0, selectedColumns.length),
                         borderColor: 'white',
                         borderWidth: 2
                     });
 
-                    return { labels: Object.keys(groupedData), datasets };
+                    return { labels: selectedColumns, datasets };
 
                 case 'scatter':
                     for (let i = 0; i < yAxisColumns.length; i++) {
