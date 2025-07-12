@@ -841,41 +841,41 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="animationType">Animation Type</label>
-                <select id="animationType">
-                    <option value="linear">Linear</option>
-                    <option value="easeInQuad">Ease In Quad</option>
-                    <option value="easeOutQuad">Ease Out Quad</option>
-                    <option value="easeInOutQuad">Ease In Out Quad</option>
-                    <option value="easeInCubic">Ease In Cubic</option>
-                    <option value="easeOutCubic">Ease Out Cubic</option>
-                    <option value="easeInOutCubic">Ease In Out Cubic</option>
-                    <option value="easeInQuart">Ease In Quart</option>
-                    <option value="easeOutQuart">Ease Out Quart</option>
-                    <option value="easeInOutQuart">Ease In Out Quart</option>
-                    <option value="easeInQuint">Ease In Quint</option>
-                    <option value="easeOutQuint">Ease Out Quint</option>
-                    <option value="easeInOutQuint">Ease In Out Quint</option>
-                    <option value="easeInSine">Ease In Sine</option>
-                    <option value="easeOutSine">Ease Out Sine</option>
-                    <option value="easeInOutSine">Ease In Out Sine</option>
-                    <option value="easeInExpo">Ease In Expo</option>
-                    <option value="easeOutExpo">Ease Out Expo</option>
-                    <option value="easeInOutExpo">Ease In Out Expo</option>
-                    <option value="easeInCirc">Ease In Circ</option>
-                    <option value="easeOutCirc">Ease Out Circ</option>
-                    <option value="easeInOutCirc">Ease In Out Circ</option>
-                    <option value="easeInElastic">Ease In Elastic</option>
-                    <option value="easeOutElastic">Ease Out Elastic</option>
-                    <option value="easeInOutElastic">Ease In Out Elastic</option>
-                    <option value="easeInBack">Ease In Back</option>
-                    <option value="easeOutBack">Ease Out Back</option>
-                    <option value="easeInOutBack">Ease In Out Back</option>
-                    <option value="easeInBounce">Ease In Bounce</option>
-                    <option value="easeOutBounce">Ease Out Bounce</option>
-                    <option value="easeInOutBounce">Ease In Out Bounce</option>
-                </select>
-            </div>
+                <label for="animationType">Animation Type</label>
+                <select id="animationType">
+                    <option value="linear">Linear</option>
+                    <option value="easeInQuad">Ease In Quad</option>
+                    <option value="easeOutQuad">Ease Out Quad</option>
+                    <option value="easeInOutQuad">Ease In Out Quad</option>
+                    <option value="easeInCubic">Ease In Cubic</option>
+                    <option value="easeOutCubic">Ease Out Cubic</option>
+                    <option value="easeInOutCubic">Ease In Out Cubic</option>
+                    <option value="easeInQuart">Ease In Quart</option>
+                    <option value="easeOutQuart">Ease Out Quart</option>
+                    <option value="easeInOutQuart">Ease In Out Quart</option>
+                    <option value="easeInQuint">Ease In Quint</option>
+                    <option value="easeOutQuint">Ease Out Quint</option>
+                    <option value="easeInOutQuint">Ease In Out Quint</option>
+                    <option value="easeInSine">Ease In Sine</option>
+                    <option value="easeOutSine">Ease Out Sine</option>
+                    <option value="easeInOutSine">Ease In Out Sine</option>
+                    <option value="easeInExpo">Ease In Expo</option>
+                    <option value="easeOutExpo">Ease Out Expo</option>
+                    <option value="easeInOutExpo">Ease In Out Expo</option>
+                    <option value="easeInCirc">Ease In Circ</option>
+                    <option value="easeOutCirc">Ease Out Circ</option>
+                    <option value="easeInOutCirc">Ease In Out Circ</option>
+                    <option value="easeInElastic">Ease In Elastic</option>
+                    <option value="easeOutElastic">Ease Out Elastic</option>
+                    <option value="easeInOutElastic">Ease In Out Elastic</option>
+                    <option value="easeInBack">Ease In Back</option>
+                    <option value="easeOutBack">Ease Out Back</option>
+                    <option value="easeInOutBack">Ease In Out Back</option>
+                    <option value="easeInBounce">Ease In Bounce</option>
+                    <option value="easeOutBounce">Ease Out Bounce</option>
+                    <option value="easeInOutBounce">Ease In Out Bounce</option>
+                </select>
+            </div>
             <button class="btn btn-success" onclick="generateDashboard()">
                 <i class="fas fa-magic"></i>
                 Generate Dashboard
@@ -1171,21 +1171,33 @@
                 'rgba(22, 160, 133, 0.8)'  // Nephritis
             ];
 
-if (!Array.isArray(sheetData)) {
-    console.error("sheetData is not an array:", sheetData);
-    return { labels: [], datasets: [] };
-}
+            if (!Array.isArray(sheetData)) {
+                console.error("sheetData is not an array:", sheetData);
+                return { labels: [], datasets: [] };
+            }
+            
+            // Ensure at least one column is selected to act as labels
+            if (selectedColumns.length === 0 || !sheetData[0].hasOwnProperty(selectedColumns[0])) {
+                console.error("No valid label column selected or data missing for it.");
+                return { labels: [], datasets: [] };
+            }
+
             const labels = sheetData.map(row => row[selectedColumns[0]]);
             const datasets = [];
 
             if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+                if (selectedColumns.length < 2) {
+                    console.warn(`Chart type '${chartType}' requires at least two columns for labels and values.`);
+                    return { labels: [], datasets: [] };
+                }
                 const groupedData = {};
                 sheetData.forEach(row => {
-                    const key = row[selectedColumns[0]];
+                    const key = row[selectedColumns[0]]; // Label column
+                    const value = parseFloat(row[selectedColumns[1]] || 0); // Value column
                     if (!groupedData[key]) {
                         groupedData[key] = 0;
                     }
-                    groupedData[key] += parseFloat(row[selectedColumns[1]] || 0);
+                    groupedData[key] += value;
                 });
 
                 return {
@@ -1198,6 +1210,10 @@ if (!Array.isArray(sheetData)) {
                     }]
                 };
             } else if (chartType === 'scatter' || chartType === 'bubble') {
+                if (selectedColumns.length < 2) {
+                    console.warn(`Chart type '${chartType}' requires at least two columns for X and Y values.`);
+                    return { labels: [], datasets: [] };
+                }
                 for (let i = 1; i < selectedColumns.length; i++) {
                     datasets.push({
                         label: `${selectedColumns[i]} vs ${selectedColumns[0]}`,
@@ -1213,8 +1229,12 @@ if (!Array.isArray(sheetData)) {
                 }
                 return { datasets };
             } else if (chartType === 'mixed') {
+                if (selectedColumns.length < 2) {
+                    console.warn(`Chart type '${chartType}' requires at least two columns for mixed data.`);
+                    return { labels: [], datasets: [] };
+                }
                 for (let i = 1; i < selectedColumns.length; i++) {
-                    const isLine = i % 2 !== 0;
+                    const isLine = i % 2 !== 0; // Alternate between line and bar
                     datasets.push({
                         type: isLine ? 'line' : 'bar',
                         label: `${selectedColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
@@ -1228,18 +1248,34 @@ if (!Array.isArray(sheetData)) {
                 }
                 return { labels, datasets };
             } else {
-                for (let i = 1; i < selectedColumns.length; i++) {
-                    datasets.push({
-                        label: selectedColumns[i],
-                        data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
-                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[i - 1],
-                        borderColor: colors[i - 1],
+                // For bar, line, area, radar, horizontalBar
+                // If only one column is selected, treat it as values and use array indices as labels
+                if (selectedColumns.length === 1) {
+                     datasets.push({
+                        label: selectedColumns[0],
+                        data: sheetData.map(row => parseFloat(row[selectedColumns[0]] || 0)),
+                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[0],
+                        borderColor: colors[0],
                         borderWidth: 2,
                         fill: chartType === 'area',
                         tension: chartType === 'line' ? 0.3 : 0
                     });
+                    // In this case, labels might just be indices or default to empty if not explicitly from data
+                    return { labels: Array.from({length: sheetData.length}, (_, i) => i + 1), datasets };
+                } else {
+                    for (let i = 1; i < selectedColumns.length; i++) {
+                        datasets.push({
+                            label: selectedColumns[i],
+                            data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
+                            backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[i - 1],
+                            borderColor: colors[i - 1],
+                            borderWidth: 2,
+                            fill: chartType === 'area',
+                            tension: chartType === 'line' ? 0.3 : 0
+                        });
+                    }
+                    return { labels, datasets };
                 }
-                return { labels, datasets };
             }
         }
 
@@ -1293,7 +1329,7 @@ if (!Array.isArray(sheetData)) {
                         grid: {
                             display: false
                         },
-                        beginAtZero: true
+                        beginAtZero: true // Should be set to false for negative values if needed
                     },
                     y: {
                         display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
@@ -1305,7 +1341,7 @@ if (!Array.isArray(sheetData)) {
                                 size: 16
                             }
                         },
-                        beginAtZero: true
+                        beginAtZero: true // Should be set to false for negative values if needed
                     }
                 }
             };
@@ -1350,7 +1386,7 @@ if (!Array.isArray(sheetData)) {
         }
 
         function generateDashboard() {
-const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
+            const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
             const animationType = document.getElementById('animationType').value;
             const selectedChartTypes = Array.from(document.querySelectorAll('#chartSelector input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
@@ -1380,17 +1416,41 @@ const selectedColumns = Array.from(document.getElementById('columnSelector').sel
             }
             activeCharts = {}; // Reset active charts
 
+            let chartsGenerated = false; // Flag to check if any charts were generated
+
             selectedChartTypes.forEach(chartType => {
-                if (['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea', 'scatter', 'bubble', 'area', 'horizontalBar', 'mixed'].includes(chartType) && selectedColumns.length >= 2) {
-const data = prepareChartData(sheetData, selectedColumns);
-if (data) {
-    renderChart(data, chartType);
-}
-                    showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
+                // Determine if the chart type requires a minimum number of columns beyond just the label column
+                const requiresTwoOrMoreColumns = ['pie', 'doughnut', 'polarArea', 'scatter', 'bubble', 'mixed'].includes(chartType);
+
+                // For all other chart types (bar, line, area, radar, horizontalBar),
+                // we can still attempt to render with 1 selected column (using indices as labels)
+                // but if more than 1 column is selected, the first is label, rest are datasets.
+
+                if (requiresTwoOrMoreColumns && selectedColumns.length < 2) {
+                    showNotification(`Chart type '${chartType}' typically requires at least 2 columns (e.g., for labels and values/X-Y). Skipping.`, 'warning');
+                    return; // Skip this chart type if not enough columns for its specific requirements
+                }
+                
+                // If the selectedColumns array becomes empty after filtering, prevent further processing
+                if (selectedColumns.length === 0) {
+                    showNotification('No valid columns selected for chart generation.', 'warning');
+                    return;
+                }
+
+                // Call prepareChartData with the arguments it expects based on its definition
+                const chartData = prepareChartData(selectedColumns, chartType, sheetData);
+                
+                // Check if data is valid for rendering (has datasets and/or labels)
+                if (chartData && (chartData.datasets && chartData.datasets.length > 0 || (chartData.labels && chartData.labels.length > 0))) {
+                    // Call renderChart with the arguments it expects based on its definition
+                    renderChart(chartType, chartData, selectedColumns, animationType);
+                    chartsGenerated = true;
+                } else {
+                    console.warn(`No valid data generated for ${chartType} with selected columns. Check prepareChartData logic.`, chartData);
                 }
             });
 
-            if (chartsGrid.innerHTML === '') {
+            if (!chartsGenerated) {
                 chartsGrid.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-chart-bar"></i>
@@ -1398,9 +1458,11 @@ if (data) {
                         <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
                     </div>
                 `;
+                // Show a more general warning if no charts were generated at all
+                showNotification('No charts could be generated with the current selections. Please review your column and chart type choices.', 'warning');
+            } else {
+                showNotification('Dashboard generated successfully!', 'success');
             }
-
-            showNotification('Dashboard generated successfully!', 'success');
         }
 
         function renderChart(chartType, chartData, selectedColumns, animationType) {
@@ -1410,7 +1472,25 @@ if (data) {
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
+            
+            // Constructing a more flexible title
+            let titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`;
+            if (selectedColumns.length > 0) {
+                const labelColumnName = selectedColumns[0];
+                const valueColumnNames = selectedColumns.slice(1);
+
+                if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+                    // For single dataset charts, use the first value column
+                    titleText += `: ${valueColumnNames[0] || 'Values'} by ${labelColumnName}`;
+                } else if (chartType === 'scatter' || chartType === 'bubble') {
+                    titleText += `: ${labelColumnName} vs ${valueColumnNames.join(', ')}`;
+                } else if (selectedColumns.length === 1) {
+                    titleText += `: ${labelColumnName}`; // If only one column, it's the main data
+                } else {
+                    titleText += `: ${valueColumnNames.join(', ')} by ${labelColumnName}`;
+                }
+            }
+
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1437,7 +1517,12 @@ if (data) {
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, selectedColumns[0], selectedColumns.slice(1).join(', '))
+                options: getChartOptions(
+                    chartType, 
+                    animationConfig, 
+                    selectedColumns[0] ? selectedColumns[0] : '', // X-axis label
+                    selectedColumns.length > 1 ? selectedColumns.slice(1).join(', ') : (selectedColumns[0] ? selectedColumns[0] : '') // Y-axis label
+                )
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
