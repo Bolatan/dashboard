@@ -6,6 +6,8 @@
     <title>Signaplus Dashboard Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -1522,9 +1524,33 @@
         }
 
         function exportDashboard() {
-            // Functionality to export the entire dashboard (e.g., as PDF or a single image)
-            // This would be more complex, likely involving a server-side rendering or a library like html2canvas
-            showNotification('Export Dashboard functionality is under development.', 'info');
+            const { jsPDF } = window.jspdf;
+            const chartsGrid = document.getElementById('chartsGrid');
+            showLoading();
+
+            html2canvas(chartsGrid, {
+                scale: 2, // Higher scale for better quality
+                useCORS: true,
+                logging: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('dashboard.pdf');
+                hideLoading();
+                showNotification('Dashboard exported successfully!', 'success');
+            }).catch(error => {
+                console.error('Error exporting dashboard:', error);
+                hideLoading();
+                showNotification('Failed to export dashboard. See console for details.', 'error');
+            });
         }
 
         function saveDashboard() {
