@@ -984,26 +984,42 @@
 
         // Helper function to populate column selectors based on sheet data headers
         function populateColumnSelectors() {
-            if (sheetData.length === 0) return;
+            if (sheetData.length === 0) {
+                console.log('No sheet data available for column selectors');
+                return;
+            }
 
             const headers = Object.keys(sheetData[0]);
+            console.log('Available headers:', headers);
+            
             const xAxisColumnSelect = document.getElementById('xAxisColumn');
             const yAxisColumnSelect = document.getElementById('yAxisColumn');
 
+            if (!xAxisColumnSelect || !yAxisColumnSelect) {
+                console.error('Column selector elements not found');
+                return;
+            }
+
+            // Clear existing options
             xAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
             yAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
 
             headers.forEach(header => {
+                // Clean up header names for display
+                const displayName = header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1');
+                
                 const optionX = document.createElement('option');
                 optionX.value = header;
-                optionX.textContent = header;
+                optionX.textContent = displayName;
                 xAxisColumnSelect.appendChild(optionX);
 
                 const optionY = document.createElement('option');
                 optionY.value = header;
-                optionY.textContent = header;
+                optionY.textContent = displayName;
                 yAxisColumnSelect.appendChild(optionY);
             });
+            
+            console.log('Column selectors populated with', headers.length, 'options');
         }
 
         // Helper function to show data preview table
