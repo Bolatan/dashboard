@@ -740,27 +740,23 @@
     </style>
 </head>
 <body>
-    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
 
-    <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
 
-    <!-- Swipe Indicator -->
     <div class="swipe-indicator" id="swipeIndicator">
         <i class="fas fa-arrow-right"></i>
     </div>
 
-    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="logo">
                 <i class="fas fa-chart-line"></i>
                 <span>Signaplus</span>
             </div>
-            <button class="toggle-sidebar mobile-close" onclick="closeMobileSidebar()" style="display: none;">
+            <button class="toggle-sidebar mobile-close" id="mobileCloseBtn" style="display: none;">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -866,10 +862,9 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content" id="mainContent">
         <div class="top-bar">
-            <button class="toggle-sidebar" onclick="toggleSidebar()">
+            <button class="toggle-sidebar" id="toggleSidebarBtn">
                 <i class="fas fa-bars"></i>
             </button>
             <h1 class="page-title">Dashboard Generator</h1>
@@ -1457,8 +1452,8 @@
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
-        const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
-        const mobileCloseBtn = document.querySelector('.mobile-close');
+        const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+        const mobileCloseBtn = document.getElementById('mobileCloseBtn');
         const mobileOverlay = document.getElementById('mobileOverlay');
         const swipeIndicator = document.getElementById('swipeIndicator');
 
@@ -1472,12 +1467,14 @@
             sidebar.classList.add('mobile-open');
             mobileOverlay.classList.add('active');
             mobileCloseBtn.style.display = 'block';
-            toggleSidebarBtn.style.display = 'none'; // Hide the hamburger icon when sidebar is open
+            // Don't hide toggleSidebarBtn here - it should remain visible
         }
 
         function closeMobileSidebar() {
             sidebar.classList.remove('mobile-open');
             mobileOverlay.classList.remove('active');
+            mobileCloseBtn.style.display = 'none';
+            toggleSidebarBtn.style.display = 'block'; // Show the hamburger icon when sidebar is closed
         }
 
         // Detect if it's a mobile device (for swipe gesture)
@@ -1520,9 +1517,8 @@
                 }
             });
 
-            // Initial state for mobile
-            sidebar.classList.add('collapsed'); // Start collapsed on mobile
-            mainContent.classList.add('expanded'); // Adjust main content for collapsed sidebar
+            // Initial state for mobile - DON'T auto-open sidebar
+            mobileCloseBtn.style.display = 'none'; // Start with close button hidden
             toggleSidebarBtn.style.display = 'block'; // Ensure hamburger is visible
         } else {
             // For desktop, ensure mobile close button and overlay are hidden
