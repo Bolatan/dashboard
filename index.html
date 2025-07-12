@@ -1175,12 +1175,11 @@
                 console.error("sheetData is not an array:", sheetData);
                 return { labels: [], datasets: [] };
             }
-            
-            // Ensure at least one column is selected to act as labels
-            if (selectedColumns.length === 0 || !sheetData[0].hasOwnProperty(selectedColumns[0])) {
-                console.error("No valid label column selected or data missing for it.");
-                return { labels: [], datasets: [] };
-            }
+// Ensure at least one column is selected to act as labels
+if (selectedColumns.length === 0 || !sheetData[0].hasOwnProperty(selectedColumns[0])) {
+    console.error("No valid label column selected or data missing for it.");
+    return { labels: [], datasets: [] };
+}
 
             const labels = sheetData.map(row => row[selectedColumns[0]]);
             const datasets = [];
@@ -1192,7 +1191,7 @@
                 }
                 const groupedData = {};
                 sheetData.forEach(row => {
-                    const key = row[selectedColumns[0]]; // Label column
+const key = row[selectedColumns[0]]; // Label column
                     const value = parseFloat(row[selectedColumns[1]] || 0); // Value column
                     if (!groupedData[key]) {
                         groupedData[key] = 0;
@@ -1210,7 +1209,7 @@
                     }]
                 };
             } else if (chartType === 'scatter' || chartType === 'bubble') {
-                if (selectedColumns.length < 2) {
+if (selectedColumns.length < 2) {
                     console.warn(`Chart type '${chartType}' requires at least two columns for X and Y values.`);
                     return { labels: [], datasets: [] };
                 }
@@ -1229,7 +1228,7 @@
                 }
                 return { datasets };
             } else if (chartType === 'mixed') {
-                if (selectedColumns.length < 2) {
+if (selectedColumns.length < 2) {
                     console.warn(`Chart type '${chartType}' requires at least two columns for mixed data.`);
                     return { labels: [], datasets: [] };
                 }
@@ -1243,12 +1242,13 @@
                         backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i - 1],
                         borderWidth: 2,
                         fill: !isLine,
-                        tension: isLine ? 0.3 : 0
+tension: isLine ? 0.3 : 0,
+                        yAxisID: isLine ? 'y-axis-1' : 'y-axis-2'
                     });
                 }
                 return { labels, datasets };
             } else {
-                // For bar, line, area, radar, horizontalBar
+// For bar, line, area, radar, horizontalBar
                 // If only one column is selected, treat it as values and use array indices as labels
                 if (selectedColumns.length === 1) {
                      datasets.push({
@@ -1260,22 +1260,22 @@
                         fill: chartType === 'area',
                         tension: chartType === 'line' ? 0.3 : 0
                     });
-                    // In this case, labels might just be indices or default to empty if not explicitly from data
-                    return { labels: Array.from({length: sheetData.length}, (_, i) => i + 1), datasets };
-                } else {
-                    for (let i = 1; i < selectedColumns.length; i++) {
-                        datasets.push({
-                            label: selectedColumns[i],
-                            data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
-                            backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[i - 1],
-                            borderColor: colors[i - 1],
-                            borderWidth: 2,
-                            fill: chartType === 'area',
-                            tension: chartType === 'line' ? 0.3 : 0
-                        });
-                    }
-                    return { labels, datasets };
+// In this case, labels might just be indices or default to empty if not explicitly from data
+                return { labels: Array.from({length: sheetData.length}, (_, i) => i + 1), datasets };
+            } else {
+                for (let i = 1; i < selectedColumns.length; i++) {
+                    datasets.push({
+                        label: selectedColumns[i],
+                        data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
+                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[i - 1],
+                        borderColor: colors[i - 1],
+                        borderWidth: 2,
+                        fill: chartType === 'area',
+                        tension: chartType === 'line' ? 0.3 : 0
+                    });
                 }
+                return { labels, datasets };
+            }
             }
         }
 
@@ -1331,8 +1331,10 @@
                         },
                         beginAtZero: true // Should be set to false for negative values if needed
                     },
-                    y: {
-                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
+                    'y-axis-1': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
                         title: {
                             display: true,
                             text: yAxisLabel,
@@ -1341,7 +1343,24 @@
                                 size: 16
                             }
                         },
-                        beginAtZero: true // Should be set to false for negative values if needed
+beginAtZero: true
+                    },
+                    'y-axis-2': {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: yAxisLabel,
+                            color: '#555',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false, // only want the grid lines for one axis to show up
+                        },
+                        beginAtZero: true
                     }
                 }
             };
@@ -1419,7 +1438,7 @@
             let chartsGenerated = false; // Flag to check if any charts were generated
 
             selectedChartTypes.forEach(chartType => {
-                // Determine if the chart type requires a minimum number of columns beyond just the label column
+// Determine if the chart type requires a minimum number of columns beyond just the label column
                 const requiresTwoOrMoreColumns = ['pie', 'doughnut', 'polarArea', 'scatter', 'bubble', 'mixed'].includes(chartType);
 
                 // For all other chart types (bar, line, area, radar, horizontalBar),
@@ -1472,8 +1491,7 @@
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            
-            // Constructing a more flexible title
+// Constructing a more flexible title
             let titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`;
             if (selectedColumns.length > 0) {
                 const labelColumnName = selectedColumns[0];
@@ -1490,7 +1508,6 @@
                     titleText += `: ${valueColumnNames.join(', ')} by ${labelColumnName}`;
                 }
             }
-
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1517,7 +1534,7 @@
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(
+options: getChartOptions(
                     chartType, 
                     animationConfig, 
                     selectedColumns[0] ? selectedColumns[0] : '', // X-axis label
