@@ -1478,13 +1478,11 @@
         function closeMobileSidebar() {
             sidebar.classList.remove('mobile-open');
             mobileOverlay.classList.remove('active');
-            mobileCloseBtn.style.display = 'none';
-            toggleSidebarBtn.style.display = 'block'; // Show hamburger icon when sidebar is closed
         }
 
         // Detect if it's a mobile device (for swipe gesture)
         function isMobileDevice() {
-            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+            return /Mobi/i.test(navigator.userAgent) || (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
         }
 
         if (isMobileDevice()) {
@@ -1523,11 +1521,9 @@
             });
 
             // Initial state for mobile
-            if (window.innerWidth <= 768) {
-                sidebar.classList.add('collapsed'); // Start collapsed on mobile
-                mainContent.classList.add('expanded'); // Adjust main content for collapsed sidebar
-                toggleSidebarBtn.style.display = 'block'; // Ensure hamburger is visible
-            }
+            sidebar.classList.add('collapsed'); // Start collapsed on mobile
+            mainContent.classList.add('expanded'); // Adjust main content for collapsed sidebar
+            toggleSidebarBtn.style.display = 'block'; // Ensure hamburger is visible
         } else {
             // For desktop, ensure mobile close button and overlay are hidden
             mobileCloseBtn.style.display = 'none';
