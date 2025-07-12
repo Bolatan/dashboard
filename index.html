@@ -940,10 +940,10 @@
                     const optionsDiv = document.createElement('div');
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
-                    if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
+                    if (['bar', 'line', 'area', 'scatter', 'bubble', 'mixed', 'horizontalBar'].includes(chartType)) {
                         optionsDiv.innerHTML += `
                             <div class="form-group">
-                                <label for="${chartType}-xAxis">X-Axis (optional)</label>
+                                <label for="${chartType}-xAxis">X-Axis</label>
                                 <select id="${chartType}-xAxis" class="chart-option-select"></select>
                             </div>
                         `;
