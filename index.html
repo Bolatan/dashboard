@@ -1524,29 +1524,29 @@
         }
 
         async function exportDashboard() {
-            const { PDFDocument } = PDFLib;
-            const chartsGrid = document.getElementById('chartsGrid');
+            const { PDFDocument, rgb } = PDFLib;
+            const pdfDoc = await PDFDocument.create();
             showLoading();
 
             try {
-                const canvas = await html2canvas(chartsGrid, {
-                    scale: 4,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff'
-                });
+                const chartCards = document.querySelectorAll('.chart-card');
+                for (const chartCard of chartCards) {
+                    const canvas = await html2canvas(chartCard, {
+                        scale: 4,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff'
+                    });
 
-                const imgData = canvas.toDataURL('image/png');
-                const pdfDoc = await PDFDocument.create();
-                const pngImage = await pdfDoc.embedPng(imgData);
-                const page = pdfDoc.addPage([canvas.width, canvas.height]);
-
-                page.drawImage(pngImage, {
-                    x: 0,
-                    y: 0,
-                    width: canvas.width,
-                    height: canvas.height,
-                });
+                    const pngImage = await pdfDoc.embedPng(canvas.toDataURL('image/png'));
+                    const page = pdfDoc.addPage([canvas.width, canvas.height]);
+                    page.drawImage(pngImage, {
+                        x: 0,
+                        y: 0,
+                        width: canvas.width,
+                        height: canvas.height,
+                    });
+                }
 
                 const pdfBytes = await pdfDoc.save();
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
