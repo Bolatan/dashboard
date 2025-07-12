@@ -102,7 +102,9 @@
             padding: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
+
 background: grey;
+
             color: white;
             font-size: 0.9em;
         }
@@ -1156,7 +1158,7 @@ background: grey;
         }
 
         // Prepare chart data
-        function prepareChartData(xAxisColumn, yAxisColumn, chartType, sheetData) {
+        function prepareChartData(selectedColumns, chartType, sheetData) {
             const colors = [
                 'rgba(52, 152, 219, 0.8)', // Primary blue
                 'rgba(46, 204, 113, 0.8)', // Success green
@@ -1170,14 +1172,17 @@ background: grey;
                 'rgba(22, 160, 133, 0.8)'  // Nephritis
             ];
 
+            const labels = sheetData.map(row => row[selectedColumns[0]]);
+            const datasets = [];
+
             if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
                 const groupedData = {};
                 sheetData.forEach(row => {
-                    const key = row[xAxisColumn];
+                    const key = row[selectedColumns[0]];
                     if (!groupedData[key]) {
                         groupedData[key] = 0;
                     }
-                    groupedData[key] += parseFloat(row[yAxisColumn] || 0);
+                    groupedData[key] += parseFloat(row[selectedColumns[1]] || 0);
                 });
 
                 return {
@@ -1190,76 +1195,48 @@ background: grey;
                     }]
                 };
             } else if (chartType === 'scatter' || chartType === 'bubble') {
-                return {
-                    datasets: [{
-                        label: `${yAxisColumn} vs ${xAxisColumn}`,
+                for (let i = 1; i < selectedColumns.length; i++) {
+                    datasets.push({
+                        label: `${selectedColumns[i]} vs ${selectedColumns[0]}`,
                         data: sheetData.map(row => ({
-                            x: parseFloat(row[xAxisColumn] || 0),
-                            y: parseFloat(row[yAxisColumn] || 0)
+                            x: parseFloat(row[selectedColumns[0]] || 0),
+                            y: parseFloat(row[selectedColumns[i]] || 0)
                         })),
-                        backgroundColor: colors[0],
-                        borderColor: colors[0],
+                        backgroundColor: colors[i - 1],
+                        borderColor: colors[i - 1],
                         pointRadius: 5,
                         pointHoverRadius: 7
-                    }]
-                };
+                    });
+                }
+                return { datasets };
             } else if (chartType === 'mixed') {
-                const labels = [];
-                const lineData = [];
-                const barData = [];
-
-                sheetData.forEach(row => {
-                    labels.push(row[xAxisColumn]);
-                    lineData.push(parseFloat(row[yAxisColumn] || 0));
-                    barData.push(parseFloat(row[yAxisColumn] || 0) * 0.8); // Example: bar data is 80% of line data
-                });
-
-                return {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: `${yAxisColumn} (Line)`,
-                            data: lineData,
-                            borderColor: colors[0],
-                            backgroundColor: 'rgba(0,0,0,0)', // Transparent fill
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.3
-                        },
-                        {
-                            type: 'bar',
-                            label: `${yAxisColumn} (Bar)`,
-                            data: barData,
-                            backgroundColor: colors[1],
-                            borderColor: colors[1],
-                            borderWidth: 1
-                        }
-                    ]
-                };
+                for (let i = 1; i < selectedColumns.length; i++) {
+                    const isLine = i % 2 !== 0;
+                    datasets.push({
+                        type: isLine ? 'line' : 'bar',
+                        label: `${selectedColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
+                        data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
+                        borderColor: colors[i - 1],
+                        backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i - 1],
+                        borderWidth: 2,
+                        fill: !isLine,
+                        tension: isLine ? 0.3 : 0
+                    });
+                }
+                return { labels, datasets };
             } else {
-                const labels = [];
-                const data = [];
-                const borderColors = [];
-
-                sheetData.forEach((row, index) => {
-                    labels.push(row[xAxisColumn]);
-                    data.push(parseFloat(row[yAxisColumn] || 0));
-                    borderColors.push(colors[index % colors.length]); // Cycle through colors for borders
-                });
-
-                return {
-                    labels: labels,
-                    datasets: [{
-                        label: yAxisColumn,
-                        data: data,
-                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors, // Transparent background for line/area
-                        borderColor: borderColors,
+                for (let i = 1; i < selectedColumns.length; i++) {
+                    datasets.push({
+                        label: selectedColumns[i],
+                        data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
+                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors[i - 1],
+                        borderColor: colors[i - 1],
                         borderWidth: 2,
                         fill: chartType === 'area',
-                        tension: chartType === 'line' ? 0.3 : 0 // Smooth lines for line chart
-                    }]
-                };
+                        tension: chartType === 'line' ? 0.3 : 0
+                    });
+                }
+                return { labels, datasets };
             }
         }
 
@@ -1402,8 +1379,8 @@ background: grey;
 
             selectedChartTypes.forEach(chartType => {
                 if (['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea', 'scatter', 'bubble', 'area', 'horizontalBar', 'mixed'].includes(chartType) && selectedColumns.length >= 2) {
-                    const chartData = prepareChartData(selectedColumns[0], selectedColumns[1], chartType, sheetData);
-                    renderChart(chartType, chartData, selectedColumns[0], selectedColumns[1], animationType);
+const chartData = prepareChartData(selectedColumns[0], selectedColumns[1], chartType, sheetData);
+renderChart(chartType, chartData, selectedColumns[0], selectedColumns[1], animationType);
                 } else {
                     showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
                 }
@@ -1422,14 +1399,14 @@ background: grey;
             showNotification('Dashboard generated successfully!', 'success');
         }
 
-        function renderChart(chartType, chartData, xAxisLabel, yAxisLabel, animationType) {
+        function renderChart(chartType, chartData, selectedColumns, animationType) {
             const chartsGrid = document.getElementById('chartsGrid');
 
             const chartCard = document.createElement('div');
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${yAxisLabel} by ${xAxisLabel}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1456,7 +1433,7 @@ background: grey;
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, xAxisLabel, yAxisLabel)
+                options: getChartOptions(chartType, animationConfig, selectedColumns[0], selectedColumns.slice(1).join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
