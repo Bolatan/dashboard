@@ -1076,15 +1076,15 @@
 
             try {
                 const sheetId = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/)[1];
-                const url = `https://cors-anywhere.herokuapp.com/https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+                const url = `https://spreadsheets.google.com/feeds/list/${sheetId}/od6/public/values?alt=json`;
 
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                const csvData = await response.text();
+                const jsonData = await response.json();
 
-                sheetData = parseCSV(csvData);
+                sheetData = parseJSON(jsonData);
 
                 updateConnectionStatus(true);
                 populateColumnSelectors();
@@ -1099,20 +1099,24 @@
             }
         }
 
-        // Parse CSV data
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
+        // Parse JSON data from Google Sheets API
+        function parseJSON(jsonData) {
+            const entries = jsonData.feed.entry;
             const data = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(value => value.trim().replace(/"/g, ''));
-                const entry = {};
-                headers.forEach((header, index) => {
-                    entry[header] = values[index];
-                });
-                data.push(entry);
+            if (!entries) {
+                return data;
             }
+
+            entries.forEach(entry => {
+                const row = {};
+                for (const key in entry) {
+                    if (key.startsWith('gsx$')) {
+                        const colName = key.substring(4);
+                        row[colName] = entry[key].$t;
+                    }
+                }
+                data.push(row);
+            });
             return data;
         }
 
