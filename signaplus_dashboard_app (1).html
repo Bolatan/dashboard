@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signaplus Dashboard Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            overflow-x: hidden;
+        }
+
+        /* Power BI-inspired sidebar */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-240px);
+        }
+
+            .sidebar-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .mobile-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.2em;
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 4px;
+                transition: background 0.2s ease;
+            }
+            
+            .mobile-close:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .logo i {
+            font-size: 1.8em;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-title {
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #bdc3c7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            color: #ecf0f1;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2980b9, #3498db);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+
+        .chart-selector {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .chart-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+
+        .chart-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chart-option input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .chart-option label {
+            cursor: pointer;
+            margin: 0;
+            font-size: 0.85em;
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 40px;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .toggle-sidebar {
+            background: none;
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #666;
+            padding: 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-sidebar:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .page-title {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .dashboard-container {
+            padding: 30px;
+        }
+
+        .connection-status {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #2ecc71;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.6s ease forwards;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chart-card:nth-child(1) { animation-delay: 0.1s; }
+        .chart-card:nth-child(2) { animation-delay: 0.2s; }
+        .chart-card:nth-child(3) { animation-delay: 0.3s; }
+        .chart-card:nth-child(4) { animation-delay: 0.4s; }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chart-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s ease;
+        }
+
+        .chart-actions .btn-download {
+            background: #3498db;
+            color: white;
+        }
+
+        .chart-actions .btn-download:hover {
+            background: #2980b9;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #bdc3c7;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .data-preview {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ecf0f1;
+            font-size: 0.9em;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+                z-index: 1001;
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .main-content.expanded {
+                margin-left: 0;
+            }
+            
+            .top-bar {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .page-title {
+                font-size: 1.4em;
+                order: 2;
+                flex: 1 1 100%;
+            }
+            
+            .top-bar > div {
+                order: 1;
+            }
+            
+            .dashboard-container {
+                padding: 15px;
+            }
+            
+            .connection-status {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .chart-card {
+                margin: 0;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .data-table {
+                font-size: 0.8em;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px 6px;
+            }
+            
+            .sidebar-section {
+                padding: 15px;
+            }
+            
+            .form-group input,
+            .form-group select {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 1em;
+            }
+            
+            .chart-actions {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .chart-actions button {
+                padding: 8px 12px;
+                width: 100%;
+            }
+            
+            .empty-state {
+                padding: 40px 15px;
+            }
+            
+            .empty-state i {
+                font-size: 3em;
+            }
+            
+            .empty-state h3 {
+                font-size: 1.2em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .sidebar-header {
+                padding: 15px;
+            }
+            
+            .logo {
+                font-size: 1.3em;
+            }
+            
+            .top-bar {
+                padding: 8px 10px;
+            }
+            
+            .page-title {
+                font-size: 1.2em;
+            }
+            
+            .dashboard-container {
+                padding: 10px;
+            }
+            
+            .chart-card {
+                padding: 15px;
+            }
+            
+            .chart-wrapper {
+                height: 250px;
+            }
+            
+            .data-preview {
+                padding: 15px;
+            }
+            
+            .data-table {
+                font-size: 0.7em;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 6px 4px;
+            }
+            
+            .connection-status {
+                padding: 15px;
+            }
+            
+            .sidebar-section {
+                padding: 12px;
+            }
+            
+            .chart-selector {
+                max-height: 200px;
+            }
+            
+            .chart-option {
+                padding: 10px 8px;
+            }
+            
+            .btn {
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+            
+            .notification {
+                right: 10px;
+                left: 10px;
+                top: 10px;
+                transform: translateY(-100%);
+            }
+            
+            .notification.show {
+                transform: translateY(0);
+            }
+        }
+        
+        /* Tablet responsive */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 250px;
+            }
+            
+            .main-content {
+                margin-left: 250px;
+            }
+            
+            .main-content.expanded {
+                margin-left: 30px;
+            }
+            
+            .charts-grid {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 25px;
+            }
+            
+            .chart-wrapper {
+                height: 350px;
+            }
+            
+            .dashboard-container {
+                padding: 20px;
+            }
+        }
+        
+        /* Touch-friendly styles */
+        @media (pointer: coarse) {
+            .btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+            
+            .chart-option {
+                min-height: 44px;
+                padding: 12px 10px;
+            }
+            
+            .toggle-sidebar {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 12px;
+            }
+            
+            .chart-actions button {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .form-group input,
+            .form-group select {
+                min-height: 44px;
+                padding: 12px;
+            }
+        }
+        
+        /* Prevent horizontal scroll on mobile */
+        .chart-card,
+        .connection-status,
+        .data-preview {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        
+        /* Mobile overlay for sidebar */
+        .mobile-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Swipe indicator for mobile */
+        .swipe-indicator {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            z-index: 100;
+            animation: swipeHint 2s infinite;
+        }
+        
+        @keyframes swipeHint {
+            0%, 100% { transform: translateY(-50%) translateX(0); }
+            50% { transform: translateY(-50%) translateX(10px); }
+        }
+        
+        @media (max-width: 768px) {
+            .swipe-indicator {
+                display: block;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background: #2ecc71;
+        }
+
+        .notification.error {
+            background: #e74c3c;
+        }
+
+        .notification.warning {
+            background: #f39c12;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+    
+    <!-- Swipe Indicator -->
+    <div class="swipe-indicator" id="swipeIndicator">
+        <i class="fas fa-arrow-right"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Signaplus</span>
+            </div>
+            <button class="toggle-sidebar mobile-close" onclick="closeMobileSidebar()" style="display: none;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Data Connection</div>
+            <div class="form-group">
+                <label for="sheetUrl">Google Sheets URL</label>
+                <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
+            </div>
+            <div class="form-group">
+                <label for="sheetName">Sheet Name</label>
+                <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
+            </div>
+            <button class="btn btn-primary" onclick="connectToSheet()">
+                <i class="fas fa-plug"></i>
+                Connect to Sheet
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Chart Selection</div>
+            <div class="chart-selector" id="chartSelector">
+                <div class="chart-option">
+                    <input type="checkbox" id="barChart" value="bar">
+                    <label for="barChart">Bar Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="lineChart" value="line">
+                    <label for="lineChart">Line Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="pieChart" value="pie">
+                    <label for="pieChart">Pie Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="doughnutChart" value="doughnut">
+                    <label for="doughnutChart">Doughnut Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="radarChart" value="radar">
+                    <label for="radarChart">Radar Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="polarAreaChart" value="polarArea">
+                    <label for="polarAreaChart">Polar Area Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="scatterChart" value="scatter">
+                    <label for="scatterChart">Scatter Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="bubbleChart" value="bubble">
+                    <label for="bubbleChart">Bubble Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="areaChart" value="area">
+                    <label for="areaChart">Area Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
+                    <label for="horizontalBarChart">Horizontal Bar</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="mixedChart" value="mixed">
+                    <label for="mixedChart">Mixed Chart</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Chart Configuration</div>
+            <div class="form-group">
+                <label for="xAxisColumn">X-Axis Column</label>
+                <select id="xAxisColumn">
+                    <option value="">Select Column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="yAxisColumn">Y-Axis Column</label>
+                <select id="yAxisColumn">
+                    <option value="">Select Column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="animationType">Animation Type</label>
+                <select id="animationType">
+                    <option value="easeInOutQuart">Ease In Out Quart</option>
+                    <option value="easeInOutBounce">Bounce</option>
+                    <option value="easeInOutElastic">Elastic</option>
+                    <option value="easeInOutCubic">Cubic</option>
+                    <option value="linear">Linear</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="generateDashboard()">
+                <i class="fas fa-magic"></i>
+                Generate Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="top-bar">
+            <button class="toggle-sidebar" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">Dashboard Generator</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="exportDashboard()">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="btn btn-success" onclick="saveDashboard()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="connection-status">
+                <div class="status-indicator" id="connectionStatus"></div>
+                <div>
+                    <strong id="connectionText">Not Connected</strong>
+                    <p id="connectionDetails">Connect to Google Sheets to start creating dashboards</p>
+                </div>
+            </div>
+
+            <div class="data-preview" id="dataPreview" style="display: none;">
+                <h3>Data Preview</h3>
+                <div id="dataTable"></div>
+            </div>
+
+            <div class="charts-grid" id="chartsGrid">
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>No Charts Generated Yet</h3>
+                    <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let sheetData = [];
+        let activeCharts = [];
+        let isConnected = false;
+
+        // Chart.js animation configurations
+        const animationConfigs = {
+            'easeInOutQuart': {
+                duration: 2000,
+                easing: 'easeInOutQuart'
+            },
+            'easeInOutBounce': {
+                duration: 2500,
+                easing: 'easeInOutBounce'
+            },
+            'easeInOutElastic': {
+                duration: 3000,
+                easing: 'easeInOutElastic'
+            },
+            'easeInOutCubic': {
+                duration: 1800,
+                easing: 'easeInOutCubic'
+            },
+            'linear': {
+                duration: 1500,
+                easing: 'linear'
+            }
+        };
+
+        // Color palettes
+        const colorPalettes = {
+            primary: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'],
+            pastel: ['#FFB6C1', '#87CEEB', '#98FB98', '#DDA0DD', '#F0E68C', '#FFA07A', '#20B2AA', '#B0C4DE'],
+            vibrant: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+        };
+
+        // Sidebar toggle with mobile support
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileClose = document.querySelector('.mobile-close');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile behavior
+                sidebar.classList.toggle('mobile-open');
+                mobileOverlay.classList.toggle('active');
+                mobileClose.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+            } else {
+                // Desktop behavior
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
+        }
+
+        // Close mobile sidebar
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileClose = document.querySelector('.mobile-close');
+            
+            sidebar.classList.remove('mobile-open');
+            mobileOverlay.classList.remove('active');
+            mobileClose.style.display = 'none';
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileClose = document.querySelector('.mobile-close');
+            
+            if (window.innerWidth > 768) {
+                // Reset mobile states when switching to desktop
+                sidebar.classList.remove('mobile-open');
+                mobileOverlay.classList.remove('active');
+                mobileClose.style.display = 'none';
+            } else {
+                // Reset desktop states when switching to mobile
+                sidebar.classList.remove('collapsed');
+                mainContent.classList.remove('expanded');
+            }
+        });
+
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isSwiping = false;
+
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            isSwiping = true;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            if (!isSwiping) return;
+            
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+            isSwiping = false;
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const swipeDistance = touchEndX - touchStartX;
+            
+            if (window.innerWidth <= 768) {
+                // Swipe right to open sidebar
+                if (swipeDistance > swipeThreshold && touchStartX < 50) {
+                    toggleSidebar();
+                }
+                // Swipe left to close sidebar
+                else if (swipeDistance < -swipeThreshold && document.getElementById('sidebar').classList.contains('mobile-open')) {
+                    closeMobileSidebar();
+                }
+            }
+        }
+
+        // Hide swipe indicator after first interaction
+        let hasInteracted = false;
+        function hideSwipeIndicator() {
+            if (!hasInteracted) {
+                document.getElementById('swipeIndicator').style.display = 'none';
+                hasInteracted = true;
+            }
+        }
+
+        document.addEventListener('touchstart', hideSwipeIndicator);
+        document.addEventListener('click', hideSwipeIndicator);
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Connect to Google Sheets (Mock implementation)
+        async function connectToSheet() {
+            const sheetUrl = document.getElementById('sheetUrl').value;
+            const sheetName = document.getElementById('sheetName').value;
+
+            if (!sheetUrl) {
+                showNotification('Please enter a Google Sheets URL', 'error');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Mock data simulation (in real app, this would connect to Google Sheets API)
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Generate sample data
+                sheetData = generateSampleData();
+                
+                updateConnectionStatus(true);
+                populateColumnSelectors();
+                showDataPreview();
+                showNotification('Successfully connected to Google Sheets!');
+
+            } catch (error) {
+                showNotification('Failed to connect to Google Sheets', 'error');
+                updateConnectionStatus(false);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Generate sample data
+        function generateSampleData() {
+            const categories = ['Q1', 'Q2', 'Q3', 'Q4'];
+            const regions = ['North', 'South', 'East', 'West'];
+            const data = [];
+
+            categories.forEach(category => {
+                regions.forEach(region => {
+                    data.push({
+                        Quarter: category,
+                        Region: region,
+                        Sales: Math.floor(Math.random() * 10000) + 5000,
+                        Profit: Math.floor(Math.random() * 5000) + 1000,
+                        Customers: Math.floor(Math.random() * 500) + 100
+                    });
+                });
+            });
+
+            return data;
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusIndicator = document.getElementById('connectionStatus');
+            const connectionText = document.getElementById('connectionText');
+            const connectionDetails = document.getElementById('connectionDetails');
+
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                connectionText.textContent = 'Connected';
+                connectionDetails.textContent = `Connected to sheet with ${sheetData.length} rows`;
+                isConnected = true;
+            } else {
+                statusIndicator.classList.remove('connected');
+                connectionText.textContent = 'Not Connected';
+                connectionDetails.textContent = 'Connect to Google Sheets to start creating dashboards';
+                isConnected = false;
+            }
+        }
+
+        // Populate column selectors
+        function populateColumnSelectors() {
+            const xAxisSelect = document.getElementById('xAxisColumn');
+            const yAxisSelect = document.getElementById('yAxisColumn');
+
+            // Clear existing options
+            xAxisSelect.innerHTML = '<option value="">Select Column</option>';
+            yAxisSelect.innerHTML = '<option value="">Select Column</option>';
+
+            if (sheetData.length > 0) {
+                const columns = Object.keys(sheetData[0]);
+                columns.forEach(column => {
+                    const option1 = document.createElement('option');
+                    option1.value = column;
+                    option1.textContent = column;
+                    xAxisSelect.appendChild(option1);
+
+                    const option2 = document.createElement('option');
+                    option2.value = column;
+                    option2.textContent = column;
+                    yAxisSelect.appendChild(option2);
+                });
+            }
+        }
+
+        // Show data preview
+        function showDataPreview() {
+            const dataPreview = document.getElementById('dataPreview');
+            const dataTable = document.getElementById('dataTable');
+
+            if (sheetData.length === 0) {
+                dataPreview.style.display = 'none';
+                return;
+            }
+
+            const columns = Object.keys(sheetData[0]);
+            const previewData = sheetData.slice(0, 5); // Show first 5 rows
+
+            let tableHTML = '<table class="data-table"><thead><tr>';
+            columns.forEach(column => {
+                tableHTML += `<th>${column}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            previewData.forEach(row => {
+                tableHTML += '<tr>';
+                columns.forEach(column => {
+                    tableHTML += `<td>${row[column] || ''}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+
+            tableHTML += '</tbody></table>';
+            dataTable.innerHTML = tableHTML;
+            dataPreview.style.display = 'block';
+        }
+
+        // Generate dashboard
+        function generateDashboard() {
+            if (!isConnected) {
+                showNotification('Please connect to Google Sheets first', 'error');
+                return;
+            }
+
+            const selectedCharts = getSelectedCharts();
+            if (selectedCharts.length === 0) {
+                showNotification('Please select at least one chart type', 'warning');
+                return;
+            }
+
+            const xAxisColumn = document.getElementById('xAxisColumn').value;
+            const yAxisColumn = document.getElementById('yAxisColumn').value;
+
+            if (!xAxisColumn || !yAxisColumn) {
+                showNotification('Please select both X-axis and Y-axis columns', 'warning');
+                return;
+            }
+
+            showLoading();
+
+            setTimeout(() => {
+                clearChartsGrid();
+                selectedCharts.forEach((chartType, index) => {
+                    setTimeout(() => {
+                        createChart(chartType, xAxisColumn, yAxisColumn, index);
+                    }, index * 200);
+                });
+                hideLoading();
+                showNotification('Dashboard generated successfully!');
+            }, 1000);
+        }
+
+        // Get selected charts
+        function getSelectedCharts() {
+            const checkboxes = document.querySelectorAll('#chartSelector input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        // Clear charts grid
+        function clearChartsGrid() {
+            const chartsGrid = document.getElementById('chartsGrid');
+            chartsGrid.innerHTML = '';
+            activeCharts = [];
+        }
+
+        // Create chart
+        function createChart(chartType, xAxisColumn, yAxisColumn, index) {
+            const chartsGrid = document.getElementById('chartsGrid');
+            const chartId = `chart-${chartType}-${index}`;
+            
+            // Create chart container
+            const chartCard = document.createElement('div');
+            chartCard.className = 'chart-card';
+            chartCard.innerHTML = `
+                <div class="chart-header">
+                    <h3 class="chart-title">${getChartTitle(chartType)}</h3>
+                    <div class="chart-actions">
+                        <button class="btn-download" onclick="downloadChart('${chartId}')">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+
+            chartsGrid.appendChild(chartCard);
+
+            // Create chart data
+            const chartData = prepareChartData(xAxisColumn, yAxisColumn, chartType);
+            
+            // Get animation configuration
+            const animationType = document.getElementById('animationType').value;
+            const animationConfig = animationConfigs[animationType];
+
+            // Create chart
+            const ctx = document.getElementById(chartId).getContext('2d');
+            const chart = new Chart(ctx, {
+                type: chartType === 'horizontalBar' ? 'bar' : chartType,
+                data: chartData,
+                options: getChartOptions(chartType, animationConfig)
+            });
+
+            activeCharts.push(chart);
+        }
+
+        // Get chart title
+        function getChartTitle(chartType) {
+            const titles = {
+                bar: 'Bar Chart',
+                line: 'Line Chart',
+                pie: 'Pie Chart',
+                doughnut: 'Doughnut Chart',
+                radar: 'Radar Chart',
+                polarArea: 'Polar Area Chart',
+                scatter: 'Scatter Chart',
+                bubble: 'Bubble Chart',
+                area: 'Area Chart',
+                horizontalBar: 'Horizontal Bar Chart',
+                mixed: 'Mixed Chart'
+            };
+            return titles[chartType] || 'Chart';
+        }
+
+        // Prepare chart data
+        function prepareChartData(xAxisColumn, yAxisColumn, chartType) {
+            const colors = colorPalettes.primary;
+            
+            if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+                // Group data by X-axis column
+                const groupedData = {};
+                sheetData
