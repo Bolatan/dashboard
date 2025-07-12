@@ -940,15 +940,17 @@
                     const optionsDiv = document.createElement('div');
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
+                    optionsDiv.innerHTML += `
+                        <div class="form-group">
+                            <label for="${chartType}-yAxis">Y-Axis</label>
+                            <select id="${chartType}-yAxis" class="chart-option-select" multiple></select>
+                        </div>
+                    `;
                     if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
                         optionsDiv.innerHTML += `
                             <div class="form-group">
-                                <label for="${chartType}-xAxis">X-Axis</label>
+                                <label for="${chartType}-xAxis">X-Axis (optional)</label>
                                 <select id="${chartType}-xAxis" class="chart-option-select"></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="${chartType}-yAxis">Y-Axis (optional)</label>
-                                <select id="${chartType}-yAxis" class="chart-option-select"></select>
                             </div>
                         `;
                     }
@@ -1193,10 +1195,9 @@
             }
 
             const xAxisColumn = chartOptions.xAxis || selectedColumns[0];
-            const yAxisColumn = chartOptions.yAxis || null;
+            const yAxisColumns = chartOptions.yAxis && chartOptions.yAxis.length > 0 ? chartOptions.yAxis : selectedColumns.filter(c => c !== xAxisColumn);
             const labels = sheetData.map(row => row[xAxisColumn]);
             const datasets = [];
-            const dataColumns = yAxisColumn ? [yAxisColumn] : selectedColumns.filter(c => c !== xAxisColumn);
 
 
             switch (chartType) {
@@ -1207,7 +1208,9 @@
                     sheetData.forEach(row => {
                         const key = row[selectedColumns[0]];
                         if (!groupedData[key]) groupedData[key] = 0;
-                        groupedData[key] += parseFloat(row[selectedColumns[1]] || 0);
+                        yAxisColumns.forEach(yCol => {
+                            groupedData[key] += parseFloat(row[yCol] || 0);
+                        });
                     });
                     datasets.push({
                         data: Object.values(groupedData),
@@ -1219,13 +1222,13 @@
 
                 case 'scatter':
                 case 'bubble':
-                    for (let i = 0; i < dataColumns.length; i++) {
+                    for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
-                            label: `${dataColumns[i]} vs ${xAxisColumn}`,
+                            label: `${yAxisColumns[i]} vs ${xAxisColumn}`,
                             data: sheetData.map(row => ({
                                 x: parseFloat(row[xAxisColumn] || 0),
-                                y: parseFloat(row[dataColumns[i]] || 0),
-                                r: chartType === 'bubble' ? parseFloat(row[selectedColumns[i+2]] || 10) : undefined
+                                y: parseFloat(row[yAxisColumns[i]] || 0),
+                                r: chartType === 'bubble' ? parseFloat(row[yAxisColumns[i+1]] || 10) : undefined
                             })),
                             backgroundColor: colors[i],
                             borderColor: colors[i],
@@ -1237,12 +1240,12 @@
                     return { datasets };
 
                 case 'mixed':
-                    for (let i = 0; i < dataColumns.length; i++) {
+                    for (let i = 0; i < yAxisColumns.length; i++) {
                         const isLine = i % 2 !== 0;
                         datasets.push({
                             type: isLine ? 'line' : 'bar',
-                            label: `${dataColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
-                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            label: `${yAxisColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
+                            data: sheetData.map(row => parseFloat(row[yAxisColumns[i]] || 0)),
                             borderColor: colors[i],
                             backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i],
                             borderWidth: 2,
@@ -1254,10 +1257,10 @@
                     return { labels, datasets };
 
                 case 'radar':
-                    for (let i = 0; i < dataColumns.length; i++) {
+                    for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
-                            label: dataColumns[i],
-                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            label: yAxisColumns[i],
+                            data: sheetData.map(row => parseFloat(row[yAxisColumns[i]] || 0)),
                             backgroundColor: colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
@@ -1267,10 +1270,10 @@
                     return { labels, datasets };
 
                 default: // bar, line, area, horizontalBar
-                    for (let i = 0; i < dataColumns.length; i++) {
+                    for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
-                            label: dataColumns[i],
-                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            label: yAxisColumns[i],
+                            data: sheetData.map(row => parseFloat(row[yAxisColumns[i]] || 0)),
                             backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
@@ -1379,18 +1382,18 @@
                     animationType: animationType
                 };
 
-                if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
-                    const xAxisSelect = document.getElementById(`${chartType}-xAxis`);
-                    if (xAxisSelect) chartOptions.xAxis = xAxisSelect.value;
-                    const yAxisSelect = document.getElementById(`${chartType}-yAxis`);
-                    if (yAxisSelect) chartOptions.yAxis = yAxisSelect.value;
-                }
+                const xAxisSelect = document.getElementById(`${chartType}-xAxis`);
+                if (xAxisSelect) chartOptions.xAxis = xAxisSelect.value;
 
-                if (selectedColumns.length >= 2 || (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea')) {
+                const yAxisSelect = document.getElementById(`${chartType}-yAxis`);
+                if (yAxisSelect) chartOptions.yAxis = Array.from(yAxisSelect.selectedOptions).map(option => option.value);
+
+
+                if (selectedColumns.length >= 1) {
                     const chartData = prepareChartData(selectedColumns, chartType, sheetData, chartOptions);
                     renderChart(chartType, chartData, selectedColumns, chartOptions);
                 } else {
-                    showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
+                    showNotification(`Please select at least one column.`, 'warning');
                 }
             });
 
