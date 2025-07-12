@@ -792,8 +792,6 @@
             vibrant: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
         };
 
-
-        // Close mobile sidebar
         function closeMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mobileOverlay = document.getElementById('mobileOverlay');
@@ -803,6 +801,7 @@
             mobileOverlay.classList.remove('active');
             mobileClose.style.display = 'none';
         }
+
 
         // Handle window resize
         window.addEventListener('resize', function() {
