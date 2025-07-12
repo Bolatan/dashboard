@@ -756,7 +756,7 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Signaplus</span>
             </div>
-            <button class="toggle-sidebar mobile-close" id="mobileCloseBtn" style="display: none;">
+            <button class="toggle-sidebar mobile-close" id="mobileCloseBtn">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -984,43 +984,24 @@
 
         // Helper function to populate column selectors based on sheet data headers
         function populateColumnSelectors() {
-            if (sheetData.length === 0) {
-                console.log('No sheet data available for column selectors');
-                return;
-            }
+    const xAxisColumn = document.getElementById('xAxisColumn');
+    const yAxisColumn = document.getElementById('yAxisColumn');
 
-            const headers = Object.keys(sheetData[0]);
-            console.log('Available headers:', headers);
-            
-            const xAxisColumnSelect = document.getElementById('xAxisColumn');
-            const yAxisColumnSelect = document.getElementById('yAxisColumn');
+    // Clear existing options
+    xAxisColumn.innerHTML = '<option value="">Select Column</option>';
+    yAxisColumn.innerHTML = '<option value="">Select Column</option>';
 
-            if (!xAxisColumnSelect || !yAxisColumnSelect) {
-                console.error('Column selector elements not found');
-                return;
-            }
-
-            // Clear existing options
-            xAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
-            yAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
-
-            headers.forEach(header => {
-                // Clean up header names for display
-                const displayName = header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1');
-                
-                const optionX = document.createElement('option');
-                optionX.value = header;
-                optionX.textContent = displayName;
-                xAxisColumnSelect.appendChild(optionX);
-
-                const optionY = document.createElement('option');
-                optionY.value = header;
-                optionY.textContent = displayName;
-                yAxisColumnSelect.appendChild(optionY);
-            });
-            
-            console.log('Column selectors populated with', headers.length, 'options');
-        }
+    if (sheetData.length > 0) {
+        const headers = Object.keys(sheetData[0]);
+        headers.forEach(header => {
+            const option = document.createElement('option');
+            option.value = header;
+            option.textContent = header;
+            xAxisColumn.appendChild(option.cloneNode(true));
+            yAxisColumn.appendChild(option);
+        });
+    }
+}
 
         // Helper function to show data preview table
         function showDataPreview() {
@@ -1502,6 +1483,7 @@
             // Adjust sidebar toggle for mobile
             toggleSidebarBtn.removeEventListener('click', toggleSidebar); // Remove desktop click listener
             toggleSidebarBtn.addEventListener('click', openMobileSidebar); // Add mobile click listener
+            mobileCloseBtn.addEventListener('click', closeMobileSidebar);
 
             // Add swipe gesture for mobile
             let touchStartX = 0;
