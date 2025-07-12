@@ -905,15 +905,303 @@
         </div>
     </div>
     <script>
-        alert('Hello, world!');
-    </script>
-</head>
-<body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-    </div>
+// Global variables
+let sheetData = [];
+let activeCharts = [];
+let isConnected = false;
 
+// Chart.js animation configurations
+const animationConfigs = {
+    'easeInOutQuart': {
+        duration: 2000,
+        easing: 'easeInOutQuart'
+    },
+    'easeInOutBounce': {
+        duration: 2500,
+        easing: 'easeInOutBounce'
+    },
+    'easeInOutElastic': {
+        duration: 3000,
+        easing: 'easeInOutElastic'
+    },
+    'easeInOutCubic': {
+        duration: 1800,
+        easing: 'easeInOutCubic'
+    },
+    'linear': {
+        duration: 1500,
+        easing: 'linear'
+    }
+};
+
+// Color palettes
+const colorPalettes = {
+    primary: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'],
+    pastel: ['#FFB6C1', '#87CEEB', '#98FB98', '#DDA0DD', '#F0E68C', '#FFA07A', '#20B2AA', '#B0C4DE'],
+    vibrant: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+};
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose = document.querySelector('.mobile-close');
+
+    if (window.innerWidth <= 768) {
+        // Mobile behavior
+        sidebar.classList.toggle('mobile-open');
+        mobileOverlay.classList.toggle('active');
+        mobileClose.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+    } else {
+        // Desktop behavior
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+    }
+}
+
+function closeMobileSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose = document.querySelector('.mobile-close');
+
+    sidebar.classList.remove('mobile-open');
+    mobileOverlay.classList.remove('active');
+    mobileClose.style.display = 'none';
+}
+
+
+// Handle window resize
+window.addEventListener('resize', function() {
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileClose = document.querySelector('.mobile-close');
+
+    if (window.innerWidth > 768) {
+        // Reset mobile states when switching to desktop
+        sidebar.classList.remove('mobile-open');
+        mobileOverlay.classList.remove('active');
+        mobileClose.style.display = 'none';
+    } else {
+        // Reset desktop states when switching to mobile
+        sidebar.classList.remove('collapsed');
+        mainContent.classList.remove('expanded');
+    }
+});
+
+// Touch/swipe support for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+let isSwiping = false;
+
+document.addEventListener('touchstart', function(e) {
+    touchStartX = e.changedTouches[0].screenX;
+    isSwiping = true;
+});
+
+document.addEventListener('touchend', function(e) {
+    if (!isSwiping) return;
+
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+    isSwiping = false;
+});
+
+function handleSwipe() {
+    const swipeThreshold = 50;
+    const swipeDistance = touchEndX - touchStartX;
+
+    if (window.innerWidth <= 768) {
+        // Swipe right to open sidebar
+        if (swipeDistance > swipeThreshold && touchStartX < 50) {
+            toggleSidebar();
+        }
+        // Swipe left to close sidebar
+        else if (swipeDistance < -swipeThreshold && document.getElementById('sidebar').classList.contains('mobile-open')) {
+            closeMobileSidebar();
+        }
+    }
+}
+
+// Hide swipe indicator after first interaction
+let hasInteracted = false;
+function hideSwipeIndicator() {
+    if (!hasInteracted) {
+        document.getElementById('swipeIndicator').style.display = 'none';
+        hasInteracted = true;
+    }
+}
+
+document.addEventListener('touchstart', hideSwipeIndicator);
+document.addEventListener('click', hideSwipeIndicator);
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Adding event listener to connectToSheetBtn");
+    document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
+});
+
+// Show notification
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => notification.classList.add('show'), 100);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => document.body.removeChild(notification), 300);
+    }, 3000);
+}
+
+// Show loading overlay
+function showLoading() {
+    document.getElementById('loadingOverlay').classList.add('active');
+}
+
+// Hide loading overlay
+function hideLoading() {
+    document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+// Connect to Google Sheets
+async function connectToSheet() {
+    console.log("connectToSheet function called");
+    const sheetUrl = document.getElementById('sheetUrl').value;
+    const sheetName = document.getElementById('sheetName').value;
+
+    if (!sheetUrl) {
+        showNotification('Please enter a Google Sheets URL', 'error');
+        return;
+    }
+
+    showLoading();
+
+    try {
+        const sheetId = sheetUrl.match(/\/d\/(.+?)\//)[1];
+        const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const csvData = await response.text();
+
+        sheetData = parseCSV(csvData);
+
+        updateConnectionStatus(true);
+        populateColumnSelectors();
+        showDataPreview();
+        showNotification('Successfully connected to Google Sheets!');
+    } catch (error) {
+        console.error('Connection Error:', error);
+        showNotification('Failed to connect or parse Google Sheet. Check URL, sheet name, and sharing settings.', 'error');
+        updateConnectionStatus(false);
+    } finally {
+        hideLoading();
+    }
+}
+
+// Parse CSV data
+function parseCSV(csv) {
+    const lines = csv.split('\n');
+    const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
+    const data = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(value => value.trim().replace(/"/g, ''));
+        const entry = {};
+        headers.forEach((header, index) => {
+            entry[header] = values[index];
+        });
+        data.push(entry);
+    }
+    return data;
+}
+
+// Update connection status
+function updateConnectionStatus(connected) {
+    const statusIndicator = document.getElementById('connectionStatus');
+    const connectionText = document.getElementById('connectionText');
+    const connectionDetails = document.getElementById('connectionDetails');
+
+    if (connected) {
+        statusIndicator.classList.add('connected');
+        connectionText.textContent = 'Connected';
+        connectionDetails.textContent = `Connected to sheet with ${sheetData.length} rows`;
+        isConnected = true;
+    } else {
+        statusIndicator.classList.remove('connected');
+        connectionText.textContent = 'Not Connected';
+        connectionDetails.textContent = 'Connect to Google Sheets to start creating dashboards';
+        isConnected = false;
+    }
+}
+
+// Populate column selectors
+function populateColumnSelectors() {
+    const xAxisSelect = document.getElementById('xAxisColumn');
+    const yAxisSelect = document.getElementById('yAxisColumn');
+
+    // Clear existing options
+    xAxisSelect.innerHTML = '<option value="">Select Column</option>';
+    yAxisSelect.innerHTML = '<option value="">Select Column</option>';
+
+    if (sheetData.length > 0) {
+        const columns = Object.keys(sheetData[0]);
+        columns.forEach(column => {
+            const option1 = document.createElement('option');
+            option1.value = column;
+            option1.textContent = column;
+            xAxisSelect.appendChild(option1);
+
+            const option2 = document.createElement('option');
+            option2.value = column;
+            option2.textContent = column;
+            yAxisSelect.appendChild(option2);
+        });
+    }
+}
+
+// Show data preview
+function showDataPreview() {
+    const dataPreview = document.getElementById('dataPreview');
+    const dataTable = document.getElementById('dataTable');
+
+    if (sheetData.length === 0) {
+        dataPreview.style.display = 'none';
+        return;
+    }
+
+    const columns = Object.keys(sheetData[0]);
+    const previewData = sheetData.slice(0, 5); // Show first 5 rows
+
+    let tableHTML = '<table class="data-table"><thead><tr>';
+    columns.forEach(column => {
+        tableHTML += `<th>${column}</th>`;
+    });
+    tableHTML += '</tr></thead><tbody>';
+
+    previewData.forEach(row => {
+        tableHTML += '<tr>';
+        columns.forEach(column => {
+            tableHTML += `<td>${row[column] || ''}</td>`;
+        });
+        tableHTML += '</tr>';
+    });
+
+    tableHTML += '</tbody></table>';
+    dataTable.innerHTML = tableHTML;
+    dataPreview.style.display = 'block';
+}
+
+// Generate dashboard
+function generateDashboard() {
+    if (!isConnected) {
+        showNotification('Please connect to Google Sheets first', 'error');
+        return;
+    }
+}
     <!-- Mobile Overlay -->
     <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
 
@@ -1064,14 +1352,178 @@
                 <div id="dataTable"></div>
             </div>
 
-            <div class="charts-grid" id="chartsGrid">
-                <div class="empty-state">
-                    <i class="fas fa-chart-bar"></i>
-                    <h3>No Charts Generated Yet</h3>
-                    <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
-                </div>
+<div class="charts-grid" id="chartsGrid">
+            <div class="empty-state">
+                <i class="fas fa-chart-bar"></i>
+                <h3>No Charts Generated Yet</h3>
+                <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
             </div>
         </div>
     </div>
-    </body>
+</div>
+</body>
+<script>
+    // Create chart data
+    const chartData = prepareChartData(xAxisColumn, yAxisColumn, chartType);
+
+    // Get animation configuration
+    const animationType = document.getElementById('animationType').value;
+    const animationConfig = animationConfigs[animationType];
+
+    // Create chart
+    const ctx = document.getElementById(chartId).getContext('2d');
+    const chart = new Chart(ctx, {
+        type: chartType === 'horizontalBar' ? 'bar' : chartType,
+        data: chartData,
+        options: getChartOptions(chartType, animationConfig)
+    });
+
+    activeCharts.push(chart);
+}
+
+// Get chart title
+function getChartTitle(chartType) {
+    const titles = {
+        bar: 'Bar Chart',
+        line: 'Line Chart',
+        pie: 'Pie Chart',
+        doughnut: 'Doughnut Chart',
+        radar: 'Radar Chart',
+        polarArea: 'Polar Area Chart',
+        scatter: 'Scatter Chart',
+        bubble: 'Bubble Chart',
+        area: 'Area Chart',
+        horizontalBar: 'Horizontal Bar Chart',
+        mixed: 'Mixed Chart'
+    };
+    return titles[chartType] || 'Chart';
+}
+
+// Prepare chart data
+function prepareChartData(xAxisColumn, yAxisColumn, chartType) {
+    const colors = colorPalettes.primary;
+
+    if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+        // Group data by X-axis column
+        const groupedData = {};
+        sheetData.forEach(row => {
+            const key = row[xAxisColumn];
+            if (!groupedData[key]) {
+                groupedData[key] = 0;
+            }
+            groupedData[key] += parseFloat(row[yAxisColumn] || 0);
+        });
+
+        return {
+            labels: Object.keys(groupedData),
+            datasets: [{
+                data: Object.values(groupedData),
+                backgroundColor: colors,
+            }]
+        };
+    }
+    // Add logic for other chart types if needed.
+    // For bar/line charts, you'd typically have labels from xAxisColumn and data from yAxisColumn directly.
+    // Example for bar/line:
+    return {
+        labels: sheetData.map(row => row[xAxisColumn]),
+        datasets: [{
+            label: yAxisColumn, // You might want a more descriptive label
+            data: sheetData.map(row => parseFloat(row[yAxisColumn] || 0)),
+            backgroundColor: colors[0], // Or use a function to get multiple colors
+            borderColor: colors[0],
+            borderWidth: 1,
+            fill: chartType === 'area' ? true : false, // For area charts
+        }]
+    };
+}
+
+function getChartOptions(chartType, animationConfig) {
+    const options = {
+        animation: animationConfig,
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.dataset.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        // Format the number based on if it's a financial value or just a number
+                        if (context.parsed.y !== null) {
+                           // Attempt to parse as currency, if it fails, format as number
+                           const value = parseFloat(context.parsed.y);
+                           if (!isNaN(value)) {
+                               // Check if it looks like currency (e.g., has decimals, or is a common financial number)
+                               // This is a simplistic check; a more robust solution might involve user input or data type detection.
+                               if (value % 1 !== 0 || Math.abs(value) > 1000) { // If it has decimals or is a large number, might be currency
+                                   label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+                               } else {
+                                   label += new Intl.NumberFormat('en-US').format(value);
+                               }
+                           } else {
+                               label += context.parsed.y; // Fallback if not a number
+                           }
+                        }
+                        return label;
+                    }
+                }
+            }
+        },
+        scales: { // Add scales for non-pie/doughnut charts
+            x: {
+                beginAtZero: true
+            },
+            y: {
+                beginAtZero: true
+            }
+        }
+    };
+
+    // Remove scales for pie/doughnut/polarArea charts as they don't use them
+    if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+        delete options.scales;
+    }
+
+    if (chartType === 'horizontalBar') {
+        options.indexAxis = 'y';
+        // Swap x and y scale definitions for horizontal bars
+        options.scales = {
+            x: {
+                beginAtZero: true
+            },
+            y: {
+                beginAtZero: true
+            }
+        };
+    }
+
+    return options;
+}
+
+function downloadChart(chartId) {
+    const chart = activeCharts.find(c => c.canvas.id === chartId);
+    if (chart) {
+        const a = document.createElement('a');
+        a.href = chart.toBase64Image();
+        a.download = `${chartId}.png`;
+        a.click();
+    }
+}
+
+function exportDashboard() {
+    showNotification('Exporting... this may take a moment.', 'warning');
+    // Implement actual export logic (e.g., using html2canvas or similar)
+}
+
+function saveDashboard() {
+    showNotification('Dashboard saved!', 'success');
+    // Implement actual save logic (e.g., to local storage or a backend)
+}
+</script>
 </html>
