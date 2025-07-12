@@ -831,8 +831,9 @@
             </div>
         </div>
 
-        <div class="sidebar-section">
+        <div class="sidebar-section" id="chartConfigSection">
             <div class="section-title">Chart Configuration</div>
+            <div id="chart-specific-options"></div>
             <div class="form-group">
                 <label for="columnSelector">Select Columns (up to 10)</label>
                 <select id="columnSelector" multiple>
@@ -928,6 +929,30 @@
 
         // Global variable to store sheet data
         let sheetData = [];
+
+        document.querySelectorAll('#chartSelector input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const chartSpecificOptions = document.getElementById('chart-specific-options');
+                chartSpecificOptions.innerHTML = ''; // Clear previous options
+
+                document.querySelectorAll('#chartSelector input[type="checkbox"]:checked').forEach(checkedBox => {
+                    const chartType = checkedBox.value;
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
+
+                    if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
+                        optionsDiv.innerHTML += `
+                            <div class="form-group">
+                                <label for="${chartType}-xAxis">X-Axis</label>
+                                <select id="${chartType}-xAxis" class="chart-option-select"></select>
+                            </div>
+                        `;
+                    }
+                    chartSpecificOptions.appendChild(optionsDiv);
+                });
+                populateColumnSelectors();
+            });
+        });
 
         // Helper function to show loading overlay
         function showLoading() {
@@ -1156,7 +1181,7 @@
         }
 
         // Prepare chart data
-        function prepareChartData(selectedColumns, chartType, sheetData) {
+        function prepareChartData(selectedColumns, chartType, sheetData, chartOptions) {
             const colors = [
                 'rgba(52, 152, 219, 0.8)', 'rgba(46, 204, 113, 0.8)', 'rgba(241, 196, 15, 0.8)',
                 'rgba(231, 76, 60, 0.8)', 'rgba(155, 89, 182, 0.8)', 'rgba(26, 188, 156, 0.8)',
@@ -1169,7 +1194,8 @@
                 return { labels: [], datasets: [] };
             }
 
-            const labels = sheetData.map(row => row[selectedColumns[0]]);
+            const xAxisColumn = chartOptions.xAxis || selectedColumns[0];
+            const labels = sheetData.map(row => row[xAxisColumn]);
             const datasets = [];
 
             switch (chartType) {
@@ -1192,16 +1218,17 @@
 
                 case 'scatter':
                 case 'bubble':
-                    for (let i = 1; i < selectedColumns.length; i++) {
+                    for (let i = 0; i < selectedColumns.length; i++) {
+                        if (selectedColumns[i] === xAxisColumn) continue;
                         datasets.push({
-                            label: `${selectedColumns[i]} vs ${selectedColumns[0]}`,
+                            label: `${selectedColumns[i]} vs ${xAxisColumn}`,
                             data: sheetData.map(row => ({
-                                x: parseFloat(row[selectedColumns[0]] || 0),
+                                x: parseFloat(row[xAxisColumn] || 0),
                                 y: parseFloat(row[selectedColumns[i]] || 0),
                                 r: chartType === 'bubble' ? parseFloat(row[selectedColumns[i+1]] || 10) : undefined // Example for bubble size
                             })),
-                            backgroundColor: colors[i - 1],
-                            borderColor: colors[i - 1],
+                            backgroundColor: colors[i],
+                            borderColor: colors[i],
                             pointRadius: 5,
                             pointHoverRadius: 7
                         });
@@ -1210,14 +1237,15 @@
                     return { datasets };
 
                 case 'mixed':
-                    for (let i = 1; i < selectedColumns.length; i++) {
+                    for (let i = 0; i < selectedColumns.length; i++) {
+                        if (selectedColumns[i] === xAxisColumn) continue;
                         const isLine = i % 2 !== 0;
                         datasets.push({
                             type: isLine ? 'line' : 'bar',
                             label: `${selectedColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
                             data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
-                            borderColor: colors[i - 1],
-                            backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i - 1],
+                            borderColor: colors[i],
+                            backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i],
                             borderWidth: 2,
                             fill: !isLine,
                             tension: isLine ? 0.3 : 0,
@@ -1227,12 +1255,13 @@
                     return { labels, datasets };
 
                 case 'radar':
-                    for (let i = 1; i < selectedColumns.length; i++) {
+                    for (let i = 0; i < selectedColumns.length; i++) {
+                        if (selectedColumns[i] === xAxisColumn) continue;
                         datasets.push({
                             label: selectedColumns[i],
                             data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
-                            backgroundColor: colors[i-1],
-                            borderColor: colors[i-1],
+                            backgroundColor: colors[i],
+                            borderColor: colors[i],
                             borderWidth: 2,
                             fill: true,
                         });
@@ -1240,12 +1269,13 @@
                     return { labels, datasets };
 
                 default: // bar, line, area, horizontalBar
-                    for (let i = 1; i < selectedColumns.length; i++) {
+                    for (let i = 0; i < selectedColumns.length; i++) {
+                        if (selectedColumns[i] === xAxisColumn) continue;
                         datasets.push({
                             label: selectedColumns[i],
                             data: sheetData.map(row => parseFloat(row[selectedColumns[i]] || 0)),
-                            backgroundColor: chartType === 'line' ? 'transparent' : colors[i - 1],
-                            borderColor: colors[i - 1],
+                            backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
+                            borderColor: colors[i],
                             borderWidth: 2,
                             fill: chartType === 'area',
                             tension: chartType === 'line' ? 0.3 : 0
@@ -1322,17 +1352,11 @@
         }
 
         function generateDashboard() {
-            const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
             const animationType = document.getElementById('animationType').value;
             const selectedChartTypes = Array.from(document.querySelectorAll('#chartSelector input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
-            if (selectedColumns.length === 0 || selectedChartTypes.length === 0) {
-                showNotification('Please select at least one column and one chart type.', 'warning');
-                return;
-            }
-
-            if (selectedColumns.length > 10) {
-                showNotification('You can select up to 10 columns.', 'warning');
+            if (selectedChartTypes.length === 0) {
+                showNotification('Please select at least one chart type.', 'warning');
                 return;
             }
 
@@ -1353,10 +1377,19 @@
             activeCharts = {}; // Reset active charts
 
             selectedChartTypes.forEach(chartType => {
-                if (['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea', 'scatter', 'bubble', 'area', 'horizontalBar', 'mixed'].includes(chartType) && selectedColumns.length >= 2) {
-                    const chartData = prepareChartData(selectedColumns, chartType, sheetData);
-                    renderChart(chartType, chartData, selectedColumns, animationType);
-                } else if (selectedColumns.length < 2) {
+                const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
+                const chartOptions = {
+                    animationType: animationType
+                };
+
+                if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
+                    chartOptions.xAxis = document.getElementById(`${chartType}-xAxis`).value;
+                }
+
+                if (selectedColumns.length >= 2 || (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea')) {
+                    const chartData = prepareChartData(selectedColumns, chartType, sheetData, chartOptions);
+                    renderChart(chartType, chartData, selectedColumns, chartOptions);
+                } else {
                     showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
                 }
             });
@@ -1374,7 +1407,7 @@
             showNotification('Dashboard generated successfully!', 'success');
         }
 
-        function renderChart(chartType, chartData, selectedColumns, animationType) {
+        function renderChart(chartType, chartData, selectedColumns, chartOptions) {
             const chartsGrid = document.getElementById('chartsGrid');
 
             const chartCard = document.createElement('div');
@@ -1402,13 +1435,13 @@
 
             const animationConfig = {
                 duration: 1000,
-                easing: animationType
+                easing: chartOptions.animationType
             };
 
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, selectedColumns[0], selectedColumns.slice(1).join(', '))
+                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.slice(1).join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
