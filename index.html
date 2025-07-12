@@ -102,7 +102,7 @@
             padding: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
-            background: rgba(255, 255, 255, 0.1);
+            background: grey;
             color: white;
             font-size: 0.9em;
         }
@@ -831,18 +831,13 @@
             </div>
         </div>
 
-        <div class="sidebar-section">
+        <div class="sidebar-section" id="chartConfigSection">
             <div class="section-title">Chart Configuration</div>
+            <div id="chart-specific-options"></div>
             <div class="form-group">
-                <label for="xAxisColumn">X-Axis Column</label>
-                <select id="xAxisColumn">
-                    <option value="">Select Column</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="yAxisColumn">Y-Axis Column</label>
-                <select id="yAxisColumn">
-                    <option value="">Select Column</option>
+                <label for="columnSelector">Select Columns (up to 10)</label>
+                <select id="columnSelector" multiple>
+                    <option value="">Select Columns</option>
                 </select>
             </div>
             <div class="form-group">
@@ -935,6 +930,34 @@
         // Global variable to store sheet data
         let sheetData = [];
 
+        document.querySelectorAll('#chartSelector input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const chartSpecificOptions = document.getElementById('chart-specific-options');
+                chartSpecificOptions.innerHTML = ''; // Clear previous options
+
+                document.querySelectorAll('#chartSelector input[type="checkbox"]:checked').forEach(checkedBox => {
+                    const chartType = checkedBox.value;
+                    const optionsDiv = document.createElement('div');
+                    optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
+
+                    if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
+                        optionsDiv.innerHTML += `
+                            <div class="form-group">
+                                <label for="${chartType}-xAxis">X-Axis</label>
+                                <select id="${chartType}-xAxis" class="chart-option-select"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="${chartType}-yAxis">Y-Axis (optional)</label>
+                                <select id="${chartType}-yAxis" class="chart-option-select"></select>
+                            </div>
+                        `;
+                    }
+                    chartSpecificOptions.appendChild(optionsDiv);
+                });
+                populateColumnSelectors();
+            });
+        });
+
         // Helper function to show loading overlay
         function showLoading() {
             document.getElementById('loadingOverlay').classList.add('active');
@@ -1018,34 +1041,27 @@
             const headers = Object.keys(sheetData[0]);
             console.log('Available headers:', headers);
             
-            const xAxisColumnSelect = document.getElementById('xAxisColumn');
-            const yAxisColumnSelect = document.getElementById('yAxisColumn');
+            const columnSelector = document.getElementById('columnSelector');
 
-            if (!xAxisColumnSelect || !yAxisColumnSelect) {
-                console.error('Column selector elements not found');
+            if (!columnSelector) {
+                console.error('Column selector element not found');
                 return;
             }
 
             // Clear existing options
-            xAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
-            yAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
+            columnSelector.innerHTML = '<option value="">Select Columns</option>';
 
             headers.forEach(header => {
                 // Clean up header names for display
                 const displayName = header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1');
                 
-                const optionX = document.createElement('option');
-                optionX.value = header;
-                optionX.textContent = displayName;
-                xAxisColumnSelect.appendChild(optionX);
-
-                const optionY = document.createElement('option');
-                optionY.value = header;
-                optionY.textContent = displayName;
-                yAxisColumnSelect.appendChild(optionY);
+                const option = document.createElement('option');
+                option.value = header;
+                option.textContent = displayName;
+                columnSelector.appendChild(option);
             });
             
-            console.log('Column selectors populated with', headers.length, 'options');
+            console.log('Column selector populated with', headers.length, 'options');
         }
 
         // Helper function to show data preview table
@@ -1169,110 +1185,106 @@
         }
 
         // Prepare chart data
-        function prepareChartData(xAxisColumn, yAxisColumn, chartType, sheetData) {
+        function prepareChartData(selectedColumns, chartType, sheetData, chartOptions) {
             const colors = [
-                'rgba(52, 152, 219, 0.8)', // Primary blue
-                'rgba(46, 204, 113, 0.8)', // Success green
-                'rgba(241, 196, 15, 0.8)', // Warning yellow
-                'rgba(231, 76, 60, 0.8)',  // Danger red
-                'rgba(155, 89, 182, 0.8)', // Amethyst
-                'rgba(26, 188, 156, 0.8)', // Turquoise
-                'rgba(230, 126, 34, 0.8)', // Carrot
-                'rgba(52, 73, 94, 0.8)',   // Wet Asphalt
-                'rgba(149, 165, 166, 0.8)',// Concrete
-                'rgba(22, 160, 133, 0.8)'  // Nephritis
+                'rgba(52, 152, 219, 0.8)', 'rgba(46, 204, 113, 0.8)', 'rgba(241, 196, 15, 0.8)',
+                'rgba(231, 76, 60, 0.8)', 'rgba(155, 89, 182, 0.8)', 'rgba(26, 188, 156, 0.8)',
+                'rgba(230, 126, 34, 0.8)', 'rgba(52, 73, 94, 0.8)', 'rgba(149, 165, 166, 0.8)',
+                'rgba(22, 160, 133, 0.8)'
             ];
 
-            if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
-                const groupedData = {};
-                sheetData.forEach(row => {
-                    const key = row[xAxisColumn];
-                    if (!groupedData[key]) {
-                        groupedData[key] = 0;
-                    }
-                    groupedData[key] += parseFloat(row[yAxisColumn] || 0);
-                });
+            if (!Array.isArray(sheetData) || sheetData.length === 0) {
+                console.error("sheetData is not a valid array:", sheetData);
+                return { labels: [], datasets: [] };
+            }
 
-                return {
-                    labels: Object.keys(groupedData),
-                    datasets: [{
+            const xAxisColumn = chartOptions.xAxis || selectedColumns[0];
+            const yAxisColumn = chartOptions.yAxis || null;
+            const labels = sheetData.map(row => row[xAxisColumn]);
+            const datasets = [];
+            const dataColumns = yAxisColumn ? [yAxisColumn] : selectedColumns.filter(c => c !== xAxisColumn);
+
+
+            switch (chartType) {
+                case 'pie':
+                case 'doughnut':
+                case 'polarArea':
+                    const groupedData = {};
+                    sheetData.forEach(row => {
+                        const key = row[selectedColumns[0]];
+                        if (!groupedData[key]) groupedData[key] = 0;
+                        groupedData[key] += parseFloat(row[selectedColumns[1]] || 0);
+                    });
+                    datasets.push({
                         data: Object.values(groupedData),
                         backgroundColor: colors,
                         borderColor: 'white',
                         borderWidth: 1
-                    }]
-                };
-            } else if (chartType === 'scatter' || chartType === 'bubble') {
-                return {
-                    datasets: [{
-                        label: `${yAxisColumn} vs ${xAxisColumn}`,
-                        data: sheetData.map(row => ({
-                            x: parseFloat(row[xAxisColumn] || 0),
-                            y: parseFloat(row[yAxisColumn] || 0)
-                        })),
-                        backgroundColor: colors[0],
-                        borderColor: colors[0],
-                        pointRadius: 5,
-                        pointHoverRadius: 7
-                    }]
-                };
-            } else if (chartType === 'mixed') {
-                const labels = [];
-                const lineData = [];
-                const barData = [];
+                    });
+                    return { labels: Object.keys(groupedData), datasets };
 
-                sheetData.forEach(row => {
-                    labels.push(row[xAxisColumn]);
-                    lineData.push(parseFloat(row[yAxisColumn] || 0));
-                    barData.push(parseFloat(row[yAxisColumn] || 0) * 0.8); // Example: bar data is 80% of line data
-                });
+                case 'scatter':
+                case 'bubble':
+                    for (let i = 0; i < dataColumns.length; i++) {
+                        datasets.push({
+                            label: `${dataColumns[i]} vs ${xAxisColumn}`,
+                            data: sheetData.map(row => ({
+                                x: parseFloat(row[xAxisColumn] || 0),
+                                y: parseFloat(row[dataColumns[i]] || 0),
+                                r: chartType === 'bubble' ? parseFloat(row[selectedColumns[i+2]] || 10) : undefined
+                            })),
+                            backgroundColor: colors[i],
+                            borderColor: colors[i],
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        });
+                        if (chartType === 'bubble') i++;
+                    }
+                    return { datasets };
 
-                return {
-                    labels: labels,
-                    datasets: [
-                        {
-                            type: 'line',
-                            label: `${yAxisColumn} (Line)`,
-                            data: lineData,
-                            borderColor: colors[0],
-                            backgroundColor: 'rgba(0,0,0,0)', // Transparent fill
+                case 'mixed':
+                    for (let i = 0; i < dataColumns.length; i++) {
+                        const isLine = i % 2 !== 0;
+                        datasets.push({
+                            type: isLine ? 'line' : 'bar',
+                            label: `${dataColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
+                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            borderColor: colors[i],
+                            backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i],
                             borderWidth: 2,
-                            fill: false,
-                            tension: 0.3
-                        },
-                        {
-                            type: 'bar',
-                            label: `${yAxisColumn} (Bar)`,
-                            data: barData,
-                            backgroundColor: colors[1],
-                            borderColor: colors[1],
-                            borderWidth: 1
-                        }
-                    ]
-                };
-            } else {
-                const labels = [];
-                const data = [];
-                const borderColors = [];
+                            fill: !isLine,
+                            tension: isLine ? 0.3 : 0,
+                            yAxisID: isLine ? 'y-axis-1' : 'y-axis-2'
+                        });
+                    }
+                    return { labels, datasets };
 
-                sheetData.forEach((row, index) => {
-                    labels.push(row[xAxisColumn]);
-                    data.push(parseFloat(row[yAxisColumn] || 0));
-                    borderColors.push(colors[index % colors.length]); // Cycle through colors for borders
-                });
+                case 'radar':
+                    for (let i = 0; i < dataColumns.length; i++) {
+                        datasets.push({
+                            label: dataColumns[i],
+                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            backgroundColor: colors[i],
+                            borderColor: colors[i],
+                            borderWidth: 2,
+                            fill: true,
+                        });
+                    }
+                    return { labels, datasets };
 
-                return {
-                    labels: labels,
-                    datasets: [{
-                        label: yAxisColumn,
-                        data: data,
-                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors, // Transparent background for line/area
-                        borderColor: borderColors,
-                        borderWidth: 2,
-                        fill: chartType === 'area',
-                        tension: chartType === 'line' ? 0.3 : 0 // Smooth lines for line chart
-                    }]
-                };
+                default: // bar, line, area, horizontalBar
+                    for (let i = 0; i < dataColumns.length; i++) {
+                        datasets.push({
+                            label: dataColumns[i],
+                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+                            backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
+                            borderColor: colors[i],
+                            borderWidth: 2,
+                            fill: chartType === 'area',
+                            tension: chartType === 'line' ? 0.3 : 0
+                        });
+                    }
+                    return { labels, datasets };
             }
         }
 
@@ -1286,110 +1298,68 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea',
+                        display: !['pie', 'doughnut', 'polarArea'].includes(chartType),
                         position: 'top',
-                        labels: {
-                            color: '#333',
-                            font: {
-                                size: 14
-                            }
-                        }
+                        labels: { color: '#333', font: { size: 14 } }
                     },
                     tooltip: {
                         callbacks: {
                             label: function(context) {
                                 let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed.y !== undefined) {
-                                    label += context.parsed.y;
-                                } else if (context.parsed.x !== undefined) { // For scatter/bubble
-                                    label += `(${context.parsed.x}, ${context.parsed.y})`;
-                                }
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) label += new Intl.NumberFormat().format(context.parsed.y);
                                 return label;
                             }
                         }
                     }
                 },
-                scales: {
-                    x: {
-                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
-                        title: {
-                            display: true,
-                            text: xAxisLabel,
-                            color: '#555',
-                            font: {
-                                size: 16
-                            }
-                        },
-                        grid: {
-                            display: false
-                        },
-                        beginAtZero: true
-                    },
-                    y: {
-                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
-                        title: {
-                            display: true,
-                            text: yAxisLabel,
-                            color: '#555',
-                            font: {
-                                size: 16
-                            }
-                        },
-                        beginAtZero: true
-                    }
-                }
+                scales: {}
             };
 
-            if (chartType === 'horizontalBar') {
-                options.indexAxis = 'y';
-                // Swap x and y axis titles for horizontal bar chart display
-                const originalXTitle = options.scales.x.title.text;
-                const originalYTitle = options.scales.y.title.text;
-                options.scales.x.title.text = originalYTitle;
-                options.scales.y.title.text = originalXTitle;
-            }
-
-            if (chartType === 'scatter' || chartType === 'bubble') {
-                options.scales.x.type = 'linear';
-                options.scales.x.position = 'bottom';
-                options.scales.y.type = 'linear';
-            }
-
-            if (chartType === 'radar') {
-                options.scales = {
-                    r: {
-                        angleLines: {
-                            display: false
-                        },
-                        suggestedMin: 0,
-                        suggestedMax: 100, // Default max, can be adjusted based on data
-                        pointLabels: {
-                            font: {
-                                size: 12
-                            }
-                        }
-                    }
+            if (!['pie', 'doughnut', 'polarArea', 'radar'].includes(chartType)) {
+                options.scales.x = {
+                    title: { display: true, text: xAxisLabel, color: '#555', font: { size: 16 } },
+                    grid: { display: false }
+                };
+                options.scales.y = {
+                    beginAtZero: true,
+                    title: { display: true, text: yAxisLabel, color: '#555', font: { size: 16 } }
                 };
             }
 
-            if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
-                delete options.scales; // These charts don't use scales
+            if (chartType === 'horizontalBar') {
+                options.indexAxis = 'y';
+            }
+
+            if (chartType === 'mixed') {
+                options.scales['y-axis-1'] = {
+                    type: 'linear', display: true, position: 'left',
+                    title: { display: true, text: 'Primary Y-Axis', color: '#555', font: { size: 16 } }
+                };
+                options.scales['y-axis-2'] = {
+                    type: 'linear', display: true, position: 'right',
+                    title: { display: true, text: 'Secondary Y-Axis', color: '#555', font: { size: 16 } },
+                    grid: { drawOnChartArea: false }
+                };
+            }
+
+            if (chartType === 'radar') {
+                options.scales.r = {
+                    angleLines: { display: true },
+                    suggestedMin: 0,
+                    pointLabels: { font: { size: 12 } }
+                };
             }
 
             return options;
         }
 
         function generateDashboard() {
-            const xAxisColumn = document.getElementById('xAxisColumn').value;
-            const yAxisColumn = document.getElementById('yAxisColumn').value;
             const animationType = document.getElementById('animationType').value;
             const selectedChartTypes = Array.from(document.querySelectorAll('#chartSelector input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
-            if (!xAxisColumn || !yAxisColumn || selectedChartTypes.length === 0) {
-                showNotification('Please select X-Axis, Y-Axis columns, and at least one chart type.', 'warning');
+            if (selectedChartTypes.length === 0) {
+                showNotification('Please select at least one chart type.', 'warning');
                 return;
             }
 
@@ -1410,11 +1380,25 @@
             activeCharts = {}; // Reset active charts
 
             selectedChartTypes.forEach(chartType => {
-                const chartData = prepareChartData(xAxisColumn, yAxisColumn, chartType, sheetData);
-                renderChart(chartType, chartData, xAxisColumn, yAxisColumn, animationType);
+                const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
+                const chartOptions = {
+                    animationType: animationType
+                };
+
+                if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
+                    chartOptions.xAxis = document.getElementById(`${chartType}-xAxis`).value;
+                    chartOptions.yAxis = document.getElementById(`${chartType}-yAxis`).value;
+                }
+
+                if (selectedColumns.length >= 2 || (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea')) {
+                    const chartData = prepareChartData(selectedColumns, chartType, sheetData, chartOptions);
+                    renderChart(chartType, chartData, selectedColumns, chartOptions);
+                } else {
+                    showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
+                }
             });
 
-            if (selectedChartTypes.length === 0) {
+            if (chartsGrid.innerHTML === '') {
                 chartsGrid.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-chart-bar"></i>
@@ -1427,14 +1411,14 @@
             showNotification('Dashboard generated successfully!', 'success');
         }
 
-        function renderChart(chartType, chartData, xAxisLabel, yAxisLabel, animationType) {
+        function renderChart(chartType, chartData, selectedColumns, chartOptions) {
             const chartsGrid = document.getElementById('chartsGrid');
 
             const chartCard = document.createElement('div');
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${yAxisLabel} by ${xAxisLabel}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1455,13 +1439,13 @@
 
             const animationConfig = {
                 duration: 1000,
-                easing: animationType
+                easing: chartOptions.animationType
             };
 
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, xAxisLabel, yAxisLabel)
+                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.slice(1).join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
