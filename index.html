@@ -1062,8 +1062,8 @@
             document.getElementById('loadingOverlay').classList.remove('active');
         }
 
-        // Connect to Google Sheets (Mock implementation)
-        function connectToSheet() {
+        // Connect to Google Sheets
+        async function connectToSheet() {
             const sheetUrl = document.getElementById('sheetUrl').value;
             const sheetName = document.getElementById('sheetName').value;
 
@@ -1074,44 +1074,45 @@
 
             showLoading();
 
-            // Mock data simulation (in real app, this would connect to Google Sheets API)
-            setTimeout(() => {
-                try {
-                    // Generate sample data
-                    sheetData = generateSampleData();
+            try {
+                const sheetId = new URL(sheetUrl).pathname.split('/')[3];
+                const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
 
-                    updateConnectionStatus(true);
-                    populateColumnSelectors();
-                    showDataPreview();
-                    showNotification('Successfully connected to Google Sheets!');
-                } catch (error) {
-                    showNotification('Failed to connect to Google Sheets', 'error');
-                    updateConnectionStatus(false);
-                } finally {
-                    hideLoading();
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
-            }, 2000);
+                const csvData = await response.text();
+
+                sheetData = parseCSV(csvData);
+
+                updateConnectionStatus(true);
+                populateColumnSelectors();
+                showDataPreview();
+                showNotification('Successfully connected to Google Sheets!');
+            } catch (error) {
+                console.error('Connection Error:', error);
+                showNotification('Failed to connect or parse Google Sheet. Check URL, sheet name, and sharing settings.', 'error');
+                updateConnectionStatus(false);
+            } finally {
+                hideLoading();
+            }
         }
 
-        // Generate sample data
-        function generateSampleData() {
-            const categories = ['Q1', 'Q2', 'Q3', 'Q4'];
-            const regions = ['North', 'South', 'East', 'West'];
-.
+        // Parse CSV data
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
             const data = [];
 
-            categories.forEach(category => {
-                regions.forEach(region => {
-                    data.push({
-                        Quarter: category,
-                        Region: region,
-                        Sales: Math.floor(Math.random() * 10000) + 5000,
-                        Profit: Math.floor(Math.random() * 5000) + 1000,
-                        Customers: Math.floor(Math.random() * 500) + 100
-                    });
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(value => value.trim().replace(/"/g, ''));
+                const entry = {};
+                headers.forEach((header, index) => {
+                    entry[header] = values[index];
                 });
-            });
-
+                data.push(entry);
+            }
             return data;
         }
 
