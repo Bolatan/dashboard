@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -1523,34 +1523,45 @@
             showNotification('Chart downloaded successfully!', 'success');
         }
 
-        function exportDashboard() {
-            const { jsPDF } = window.jspdf;
+        async function exportDashboard() {
+            const { PDFDocument } = PDFLib;
             const chartsGrid = document.getElementById('chartsGrid');
             showLoading();
 
-            html2canvas(chartsGrid, {
-                scale: 4, // Higher scale for better quality
-                useCORS: true,
-                logging: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff'
-            }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'px',
-                    format: [canvas.width, canvas.height]
+            try {
+                const canvas = await html2canvas(chartsGrid, {
+                    scale: 4,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
                 });
 
-                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-                pdf.save('dashboard.pdf');
+                const imgData = canvas.toDataURL('image/png');
+                const pdfDoc = await PDFDocument.create();
+                const pngImage = await pdfDoc.embedPng(imgData);
+                const page = pdfDoc.addPage([canvas.width, canvas.height]);
+
+                page.drawImage(pngImage, {
+                    x: 0,
+                    y: 0,
+                    width: canvas.width,
+                    height: canvas.height,
+                });
+
+                const pdfBytes = await pdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'dashboard.pdf';
+                link.click();
+
                 hideLoading();
                 showNotification('Dashboard exported successfully!', 'success');
-            }).catch(error => {
+            } catch (error) {
                 console.error('Error exporting dashboard:', error);
                 hideLoading();
                 showNotification('Failed to export dashboard. See console for details.', 'error');
-            });
+            }
         }
 
         function saveDashboard() {
