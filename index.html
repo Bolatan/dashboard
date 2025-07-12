@@ -1213,63 +1213,64 @@
                 case 'pie':
                 case 'doughnut':
                 case 'polarArea':
-                    // Use specific options or fall back to selected columns
-                    const labelColumn = chartOptions.labelColumn || selectedColumns[0];
-                    const dataColumns = chartOptions.dataColumns && chartOptions.dataColumns.length > 0 
-                        ? chartOptions.dataColumns 
-                        : selectedColumns.slice(1);
-                    
-                    if (dataColumns.length === 0) {
-                        // If no data columns specified, count occurrences of label column
-                        const groupedData = {};
-                        sheetData.forEach(row => {
-                            const key = row[labelColumn] || 'Unknown';
-                            if (!groupedData[key]) groupedData[key] = 0;
-                            groupedData[key] += 1;
-                        });
-                        datasets.push({
-                            data: Object.values(groupedData),
-                            backgroundColor: colors.slice(0, Object.keys(groupedData).length),
-                            borderColor: 'white',
-                            borderWidth: 2
-                        });
-                        return { labels: Object.keys(groupedData), datasets };
-                    } else {
-                        // Sum the data columns for each label
-                        const groupedData = {};
-                        sheetData.forEach(row => {
-                            const key = row[labelColumn] || 'Unknown';
-                            if (!groupedData[key]) groupedData[key] = 0;
-                            dataColumns.forEach(col => {
-                                groupedData[key] += parseFloat(row[col] || 0);
-                            });
-                        });
-                        datasets.push({
-                            data: Object.values(groupedData),
-                            backgroundColor: colors.slice(0, Object.keys(groupedData).length),
-                            borderColor: 'white',
-                            borderWidth: 2
-                        });
-                        return { labels: Object.keys(groupedData), datasets };
+                    const labelColumn = selectedColumns[0];
+                    const dataColumn = selectedColumns[1];
+
+                    if (!labelColumn || !dataColumn) {
+                        console.error('Pie/Doughnut/PolarArea requires at least two columns (one for labels, one for data).');
+                        return { labels: [], datasets: [] };
                     }
 
+                    const chartData = sheetData.map(row => ({
+                        label: row[labelColumn],
+                        data: parseFloat(row[dataColumn] || 0)
+                    }));
+
+                    datasets.push({
+                        data: chartData.map(item => item.data),
+                        backgroundColor: colors.slice(0, chartData.length),
+                        borderColor: 'white',
+                        borderWidth: 2
+                    });
+
+                    return { labels: chartData.map(item => item.label), datasets };
+
                 case 'scatter':
-                case 'bubble':
                     for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
                             label: `${yAxisColumns[i]} vs ${xAxisColumn}`,
                             data: sheetData.map(row => ({
                                 x: parseFloat(row[xAxisColumn] || 0),
-                                y: parseFloat(row[yAxisColumns[i]] || 0),
-                                r: chartType === 'bubble' ? parseFloat(row[yAxisColumns[i+1]] || 10) : undefined
+                                y: parseFloat(row[yAxisColumns[i]] || 0)
                             })),
                             backgroundColor: colors[i],
                             borderColor: colors[i],
                             pointRadius: 5,
                             pointHoverRadius: 7
                         });
-                        if (chartType === 'bubble') i++;
                     }
+                    return { datasets };
+
+                case 'bubble':
+                    if (yAxisColumns.length < 2) {
+                        console.error('Bubble chart requires at least three columns (X-axis, Y-axis, and radius).');
+                        return { labels: [], datasets: [] };
+                    }
+
+                    const yColumn = yAxisColumns[0];
+                    const rColumn = yAxisColumns[1];
+
+                    datasets.push({
+                        label: `${yColumn} vs ${xAxisColumn} (Size: ${rColumn})`,
+                        data: sheetData.map(row => ({
+                            x: parseFloat(row[xAxisColumn] || 0),
+                            y: parseFloat(row[yColumn] || 0),
+                            r: parseFloat(row[rColumn] || 10)
+                        })),
+                        backgroundColor: colors[0],
+                        borderColor: colors[0]
+                    });
+
                     return { datasets };
 
                 case 'mixed':
@@ -1341,7 +1342,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: !['pie', 'doughnut', 'polarArea'].includes(chartType),
+                        display: true, // Always display legend for all chart types
                         position: 'top',
                         labels: { color: '#333', font: { size: 14 } }
                     },
@@ -1359,7 +1360,18 @@
                 scales: {}
             };
 
-            if (!['pie', 'doughnut', 'polarArea', 'radar'].includes(chartType)) {
+            if (['pie', 'doughnut', 'polarArea'].includes(chartType)) {
+                // No scales for these chart types
+                options.scales = {};
+            } else if (chartType === 'radar') {
+                options.scales = {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 0,
+                        pointLabels: { font: { size: 12 } }
+                    }
+                };
+            } else {
                 options.scales.x = {
                     title: { display: true, text: xAxisLabel, color: '#555', font: { size: 16 } },
                     grid: { display: false }
