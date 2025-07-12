@@ -1075,7 +1075,7 @@
             showLoading();
 
             try {
-                const sheetId = new URL(sheetUrl).pathname.split('/')[3];
+                const sheetId = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)[1];
                 const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
 
                 const response = await fetch(url);
