@@ -1006,7 +1006,14 @@
 
             headers.forEach(header => {
                 // Clean up header names for display
-                const displayName = header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1');
+                const displayName = header
+                    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+                    .replace(/[._-]/g, ' ')    // Replace dots, underscores, or dashes with spaces
+                    .replace(/\s+/g, ' ')      // Normalize spaces
+                    .trim()
+                    .split(' ')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
                 
                 const optionX = document.createElement('option');
                 optionX.value = header;
