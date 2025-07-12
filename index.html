@@ -1143,7 +1143,22 @@
             if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
                 // Group data by X-axis column
                 const groupedData = {};
-                sheetData
+                sheetData.forEach(row => {
+                    const key = row[xAxisColumn];
+                    if (!groupedData[key]) {
+                        groupedData[key] = 0;
+                    }
+                    groupedData[key] += parseFloat(row[yAxisColumn] || 0);
+                });
+
+                return {
+                    labels: Object.keys(groupedData),
+                    datasets: [{
+                        data: Object.values(groupedData),
+                        backgroundColor: colors,
+                    }]
+                };
+            }
     </script>
 </head>
 <body>
