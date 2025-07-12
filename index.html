@@ -1213,21 +1213,45 @@
                 case 'pie':
                 case 'doughnut':
                 case 'polarArea':
-                    const groupedData = {};
-                    sheetData.forEach(row => {
-                        const key = row[selectedColumns[0]];
-                        if (!groupedData[key]) groupedData[key] = 0;
-                        yAxisColumns.forEach(yCol => {
-                            groupedData[key] += parseFloat(row[yCol] || 0);
+                    // Use specific options or fall back to selected columns
+                    const labelColumn = chartOptions.labelColumn || selectedColumns[0];
+                    const dataColumns = chartOptions.dataColumns && chartOptions.dataColumns.length > 0 
+                        ? chartOptions.dataColumns 
+                        : selectedColumns.slice(1);
+                    
+                    if (dataColumns.length === 0) {
+                        // If no data columns specified, count occurrences of label column
+                        const groupedData = {};
+                        sheetData.forEach(row => {
+                            const key = row[labelColumn] || 'Unknown';
+                            if (!groupedData[key]) groupedData[key] = 0;
+                            groupedData[key] += 1;
                         });
-                    });
-                    datasets.push({
-                        data: Object.values(groupedData),
-                        backgroundColor: colors,
-                        borderColor: 'white',
-                        borderWidth: 1
-                    });
-                    return { labels: Object.keys(groupedData), datasets };
+                        datasets.push({
+                            data: Object.values(groupedData),
+                            backgroundColor: colors.slice(0, Object.keys(groupedData).length),
+                            borderColor: 'white',
+                            borderWidth: 2
+                        });
+                        return { labels: Object.keys(groupedData), datasets };
+                    } else {
+                        // Sum the data columns for each label
+                        const groupedData = {};
+                        sheetData.forEach(row => {
+                            const key = row[labelColumn] || 'Unknown';
+                            if (!groupedData[key]) groupedData[key] = 0;
+                            dataColumns.forEach(col => {
+                                groupedData[key] += parseFloat(row[col] || 0);
+                            });
+                        });
+                        datasets.push({
+                            data: Object.values(groupedData),
+                            backgroundColor: colors.slice(0, Object.keys(groupedData).length),
+                            borderColor: 'white',
+                            borderWidth: 2
+                        });
+                        return { labels: Object.keys(groupedData), datasets };
+                    }
 
                 case 'scatter':
                 case 'bubble':
