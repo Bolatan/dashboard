@@ -1382,9 +1382,9 @@ const selectedColumns = Array.from(document.getElementById('columnSelector').sel
 
             selectedChartTypes.forEach(chartType => {
                 if (['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea', 'scatter', 'bubble', 'area', 'horizontalBar', 'mixed'].includes(chartType) && selectedColumns.length >= 2) {
-const chartData = prepareChartData(selectedColumns[0], selectedColumns[1], chartType, sheetData);
-renderChart(chartType, chartData, selectedColumns[0], selectedColumns[1], animationType);
-} else { // This 'else' likely closes a conditional block from earlier in your code
+const chartData = prepareChartData(selectedColumns, chartType, sheetData);
+renderChart(chartType, chartData, selectedColumns, animationType);
+} else if (selectedColumns.length < 2) {
                     showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
                 }
             });
