@@ -1075,10 +1075,7 @@
             showLoading();
 
             try {
-                let sheetId = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)[1];
-                if (sheetUrl.includes('/edit')) {
-                    sheetId = sheetUrl.split('/d/')[1].split('/')[0];
-                }
+                const sheetId = sheetUrl.match(/\/d\/(.+?)\//)[1];
                 const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
 
                 const response = await fetch(url);
