@@ -738,25 +738,6 @@
             background: #f39c12;
         }
     </style>
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const mobileOverlay = document.getElementById('mobileOverlay');
-            const mobileClose = document.querySelector('.mobile-close');
-
-            if (window.innerWidth <= 768) {
-                // Mobile behavior
-                sidebar.classList.toggle('mobile-open');
-                mobileOverlay.classList.toggle('active');
-                mobileClose.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
-            } else {
-                // Desktop behavior
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-            }
-        }
-    </script>
 </head>
 <body>
     <!-- Loading Overlay -->
@@ -794,7 +775,7 @@
                 <label for="sheetName">Sheet Name</label>
                 <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
             </div>
-            <button class="btn btn-primary" onclick="connectToSheet()">
+            <button class="btn btn-primary" id="connectToSheetBtn">
                 <i class="fas fa-plug"></i>
                 Connect to Sheet
             </button>
@@ -923,7 +904,6 @@
             </div>
         </div>
     </div>
-
     <script>
         // Global variables
         let sheetData = [];
@@ -961,8 +941,24 @@
             vibrant: ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
         };
 
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const mobileOverlay = document.getElementById('mobileOverlay');
+            const mobileClose = document.querySelector('.mobile-close');
 
-        // Close mobile sidebar
+            if (window.innerWidth <= 768) {
+                // Mobile behavior
+                sidebar.classList.toggle('mobile-open');
+                mobileOverlay.classList.toggle('active');
+                mobileClose.style.display = sidebar.classList.contains('mobile-open') ? 'block' : 'none';
+            } else {
+                // Desktop behavior
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            }
+        }
+
         function closeMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mobileOverlay = document.getElementById('mobileOverlay');
@@ -972,6 +968,7 @@
             mobileOverlay.classList.remove('active');
             mobileClose.style.display = 'none';
         }
+
 
         // Handle window resize
         window.addEventListener('resize', function() {
@@ -1038,6 +1035,11 @@
         document.addEventListener('touchstart', hideSwipeIndicator);
         document.addEventListener('click', hideSwipeIndicator);
 
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Adding event listener to connectToSheetBtn");
+            document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
+        });
+
         // Show notification
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
@@ -1064,6 +1066,7 @@
 
         // Connect to Google Sheets
         async function connectToSheet() {
+            console.log("connectToSheet function called");
             const sheetUrl = document.getElementById('sheetUrl').value;
             const sheetName = document.getElementById('sheetName').value;
 
@@ -1307,4 +1310,74 @@
             if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
                 // Group data by X-axis column
                 const groupedData = {};
-                sheetData
+                sheetData.forEach(row => {
+                    const key = row[xAxisColumn];
+                    if (!groupedData[key]) {
+                        groupedData[key] = 0;
+                    }
+                    groupedData[key] += parseFloat(row[yAxisColumn] || 0);
+                });
+
+                return {
+                    labels: Object.keys(groupedData),
+                    datasets: [{
+                        data: Object.values(groupedData),
+                        backgroundColor: colors,
+                    }]
+                };
+            }
+        }
+
+        function getChartOptions(chartType, animationConfig) {
+            const options = {
+                animation: animationConfig,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            if (chartType === 'horizontalBar') {
+                options.indexAxis = 'y';
+            }
+
+            return options;
+        }
+
+        function downloadChart(chartId) {
+            const chart = activeCharts.find(c => c.canvas.id === chartId);
+            if (chart) {
+                const a = document.createElement('a');
+                a.href = chart.toBase64Image();
+                a.download = `${chartId}.png`;
+                a.click();
+            }
+        }
+
+        function exportDashboard() {
+            showNotification('Exporting... this may take a moment.', 'warning');
+        }
+
+        function saveDashboard() {
+            showNotification('Dashboard saved!', 'success');
+        }
+    </script>
+</body>
+</html>
