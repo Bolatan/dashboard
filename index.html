@@ -1074,29 +1074,38 @@
         document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
 
         async function connectToSheet() {
+            console.log('Connecting to sheet...');
             const sheetUrl = document.getElementById('sheetUrl').value;
             const sheetName = document.getElementById('sheetName').value;
+            console.log('Sheet URL:', sheetUrl);
+            console.log('Sheet Name:', sheetName);
 
             if (!sheetUrl) {
                 alert('Please enter a Google Sheets URL.');
                 return;
             }
 
-            const sheetId = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)[1];
-
-            if (!sheetId) {
+            const match = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (!match || !match[1]) {
                 alert('Invalid Google Sheets URL.');
                 return;
             }
+            const sheetId = match[1];
+            console.log('Sheet ID:', sheetId);
 
             const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+            console.log('Fetching URL:', url);
 
             try {
                 const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const data = await response.text();
+                console.log('Data received:', data);
 
-                const rows = data.split('\n');
-                const headers = rows[0].split(',');
+                const rows = data.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+                const headers = rows[0].map(header => header.replace(/"/g, ''));
 
                 let html = '<table class="data-table">';
                 html += '<thead><tr>';
@@ -1106,10 +1115,10 @@
                 html += '</tr></thead>';
                 html += '<tbody>';
                 for (let i = 1; i < rows.length; i++) {
-                    const cells = rows[i].split(',');
+                    const cells = rows[i];
                     html += '<tr>';
                     cells.forEach(cell => {
-                        html += `<td>${cell}</td>`;
+                        html += `<td>${cell.replace(/"/g, '')}</td>`;
                     });
                     html += '</tr>';
                 }
@@ -1136,8 +1145,35 @@
                     yAxisColumn.appendChild(option);
                 });
             } catch (error) {
-                alert('Error connecting to Google Sheets.');
+                console.error('Error connecting to Google Sheets:', error);
+                const connectionStatus = document.getElementById('connectionStatus');
+                const connectionText = document.getElementById('connectionText');
+                const connectionDetails = document.getElementById('connectionDetails');
+
+                connectionStatus.classList.remove('connected');
+                connectionText.textContent = 'Connection Failed';
+                connectionDetails.textContent = 'Could not connect to the Google Sheet. Please check the URL, sheet name, and sharing permissions.';
+
+                showNotification('Error connecting to Google Sheets. Check the console for details.', 'error');
             }
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 10);
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 5000);
         }
     </script>
     </body>
