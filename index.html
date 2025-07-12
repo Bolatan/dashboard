@@ -940,11 +940,25 @@
                     const optionsDiv = document.createElement('div');
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
-                    if (['bar', 'line', 'area', 'scatter', 'bubble', 'mixed', 'horizontalBar'].includes(chartType)) {
+                    // Only add X-Axis option for charts that use X-Y axis (not pie, doughnut, radar, polarArea)
+                    if (['bar', 'line', 'area', 'bubble', 'mixed', 'horizontalBar'].includes(chartType)) {
                         optionsDiv.innerHTML += `
                             <div class="form-group">
                                 <label for="${chartType}-xAxis">X-Axis</label>
                                 <select id="${chartType}-xAxis" class="chart-option-select"></select>
+                            </div>
+                        `;
+                    }
+                    // Add scatter chart without X-Axis option since it uses both X and Y coordinates differently
+                    if (chartType === 'scatter') {
+                        optionsDiv.innerHTML += `
+                            <div class="form-group">
+                                <label for="${chartType}-xAxis">X-Axis</label>
+                                <select id="${chartType}-xAxis" class="chart-option-select"></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="${chartType}-yAxis">Y-Axis</label>
+                                <select id="${chartType}-yAxis" class="chart-option-select"></select>
                             </div>
                         `;
                     }
@@ -1041,7 +1055,8 @@
 
             columnSelectors.forEach(selector => {
                 const isXAxis = selector.id.includes('-xAxis');
-                selector.innerHTML = `<option value="">${isXAxis ? 'Select X-Axis' : 'Select Columns'}</option>`;
+                const isYAxis = selector.id.includes('-yAxis'); // Check for Y-axis selectors
+                selector.innerHTML = `<option value="">${isXAxis ? 'Select X-Axis' : (isYAxis ? 'Select Y-Axis' : 'Select Columns')}</option>`;
                 headers.forEach(header => {
                     const displayName = header.charAt(0).toUpperCase() + header.slice(1).replace(/([A-Z])/g, ' $1');
                     const option = document.createElement('option');
