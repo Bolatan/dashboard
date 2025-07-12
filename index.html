@@ -1470,6 +1470,7 @@
         const mainContent = document.getElementById('mainContent');
         const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
         const mobileCloseBtn = document.getElementById('mobileCloseBtn');
+        mobileCloseBtn.addEventListener('click', closeMobileSidebar);
         const mobileOverlay = document.getElementById('mobileOverlay');
         const swipeIndicator = document.getElementById('swipeIndicator');
 
@@ -1499,22 +1500,22 @@
         }
 
         if (isMobileDevice()) {
-            // Adjust sidebar toggle for mobile
-            toggleSidebarBtn.removeEventListener('click', toggleSidebar); // Remove desktop click listener
-            toggleSidebarBtn.addEventListener('click', openMobileSidebar); // Add mobile click listener
-
+            // Mobile functionality
+            toggleSidebarBtn.addEventListener('click', openMobileSidebar);
+            mobileCloseBtn.addEventListener('click', closeMobileSidebar);
+            
             // Add swipe gesture for mobile
             let touchStartX = 0;
             let touchEndX = 0;
 
             document.addEventListener('touchstart', (e) => {
-                if (e.touches[0].clientX < 50 && !sidebar.classList.contains('mobile-open')) { // Only detect swipe from left edge if sidebar is closed
+                if (e.touches[0].clientX < 50 && !sidebar.classList.contains('mobile-open')) {
                     touchStartX = e.touches[0].clientX;
                 }
             });
 
             document.addEventListener('touchmove', (e) => {
-                if (touchStartX > 0) { // Only track if a swipe started
+                if (touchStartX > 0) {
                     touchEndX = e.touches[0].clientX;
                 }
             });
@@ -1522,27 +1523,28 @@
             document.addEventListener('touchend', () => {
                 if (touchStartX > 0) {
                     const swipeDistance = touchEndX - touchStartX;
-                    if (swipeDistance > 50 && !sidebar.classList.contains('mobile-open')) { // Swiped right
+                    if (swipeDistance > 50 && !sidebar.classList.contains('mobile-open')) {
                         openMobileSidebar();
-                        swipeIndicator.style.display = 'none'; // Hide indicator once swiped
-                    } else if (swipeDistance < -50 && sidebar.classList.contains('mobile-open')) { // Swiped left
+                        swipeIndicator.style.display = 'none';
+                    } else if (swipeDistance < -50 && sidebar.classList.contains('mobile-open')) {
                         closeMobileSidebar();
                     }
-                    touchStartX = 0; // Reset
-                    touchEndX = 0; // Reset
+                    touchStartX = 0;
+                    touchEndX = 0;
                 }
             });
 
-            // Initial state for mobile - DON'T auto-open sidebar
-            mobileCloseBtn.style.display = 'none'; // Start with close button hidden
-            toggleSidebarBtn.style.display = 'block'; // Ensure hamburger is visible
+            // Initial state for mobile
+            mobileCloseBtn.style.display = 'none';
+            toggleSidebarBtn.style.display = 'block';
         } else {
-            // For desktop, ensure mobile close button and overlay are hidden
+            // Desktop functionality
+            toggleSidebarBtn.addEventListener('click', toggleSidebar);
             mobileCloseBtn.style.display = 'none';
             mobileOverlay.style.display = 'none';
             swipeIndicator.style.display = 'none';
         }
-
+        
         // Notification system
         function showNotification(message, type) {
             const notification = document.createElement('div');
