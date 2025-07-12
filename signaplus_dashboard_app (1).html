@@ -1063,7 +1063,7 @@
         }
 
         // Connect to Google Sheets (Mock implementation)
-        async function connectToSheet() {
+        function connectToSheet() {
             const sheetUrl = document.getElementById('sheetUrl').value;
             const sheetName = document.getElementById('sheetName').value;
 
@@ -1074,24 +1074,23 @@
 
             showLoading();
 
-            try {
-                // Mock data simulation (in real app, this would connect to Google Sheets API)
-                await new Promise(resolve => setTimeout(resolve, 2000));
+            // Mock data simulation (in real app, this would connect to Google Sheets API)
+            setTimeout(() => {
+                try {
+                    // Generate sample data
+                    sheetData = generateSampleData();
 
-                // Generate sample data
-                sheetData = generateSampleData();
-                
-                updateConnectionStatus(true);
-                populateColumnSelectors();
-                showDataPreview();
-                showNotification('Successfully connected to Google Sheets!');
-
-            } catch (error) {
-                showNotification('Failed to connect to Google Sheets', 'error');
-                updateConnectionStatus(false);
-            } finally {
-                hideLoading();
-            }
+                    updateConnectionStatus(true);
+                    populateColumnSelectors();
+                    showDataPreview();
+                    showNotification('Successfully connected to Google Sheets!');
+                } catch (error) {
+                    showNotification('Failed to connect to Google Sheets', 'error');
+                    updateConnectionStatus(false);
+                } finally {
+                    hideLoading();
+                }
+            }, 2000);
         }
 
         // Generate sample data
