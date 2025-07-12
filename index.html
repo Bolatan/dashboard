@@ -1034,6 +1034,8 @@
         document.addEventListener('touchstart', hideSwipeIndicator);
         document.addEventListener('click', hideSwipeIndicator);
 
+
+        console.log("Adding event listener to connectToSheetBtn");
         document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
 
         // Show notification
@@ -1062,6 +1064,7 @@
 
         // Connect to Google Sheets
         async function connectToSheet() {
+            console.log("connectToSheet function called");
             const sheetUrl = document.getElementById('sheetUrl').value;
             const sheetName = document.getElementById('sheetName').value;
 
