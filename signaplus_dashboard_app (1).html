@@ -738,173 +738,6 @@
             background: #f39c12;
         }
     </style>
-</head>
-<body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-    
-    <!-- Swipe Indicator -->
-    <div class="swipe-indicator" id="swipeIndicator">
-        <i class="fas fa-arrow-right"></i>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Signaplus</span>
-            </div>
-            <button class="toggle-sidebar mobile-close" onclick="closeMobileSidebar()" style="display: none;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Data Connection</div>
-            <div class="form-group">
-                <label for="sheetUrl">Google Sheets URL</label>
-                <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
-            </div>
-            <div class="form-group">
-                <label for="sheetName">Sheet Name</label>
-                <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
-            </div>
-            <button class="btn btn-primary" onclick="connectToSheet()">
-                <i class="fas fa-plug"></i>
-                Connect to Sheet
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Chart Selection</div>
-            <div class="chart-selector" id="chartSelector">
-                <div class="chart-option">
-                    <input type="checkbox" id="barChart" value="bar">
-                    <label for="barChart">Bar Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="lineChart" value="line">
-                    <label for="lineChart">Line Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="pieChart" value="pie">
-                    <label for="pieChart">Pie Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="doughnutChart" value="doughnut">
-                    <label for="doughnutChart">Doughnut Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="radarChart" value="radar">
-                    <label for="radarChart">Radar Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="polarAreaChart" value="polarArea">
-                    <label for="polarAreaChart">Polar Area Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="scatterChart" value="scatter">
-                    <label for="scatterChart">Scatter Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="bubbleChart" value="bubble">
-                    <label for="bubbleChart">Bubble Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="areaChart" value="area">
-                    <label for="areaChart">Area Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
-                    <label for="horizontalBarChart">Horizontal Bar</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="mixedChart" value="mixed">
-                    <label for="mixedChart">Mixed Chart</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Chart Configuration</div>
-            <div class="form-group">
-                <label for="xAxisColumn">X-Axis Column</label>
-                <select id="xAxisColumn">
-                    <option value="">Select Column</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="yAxisColumn">Y-Axis Column</label>
-                <select id="yAxisColumn">
-                    <option value="">Select Column</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="animationType">Animation Type</label>
-                <select id="animationType">
-                    <option value="easeInOutQuart">Ease In Out Quart</option>
-                    <option value="easeInOutBounce">Bounce</option>
-                    <option value="easeInOutElastic">Elastic</option>
-                    <option value="easeInOutCubic">Cubic</option>
-                    <option value="linear">Linear</option>
-                </select>
-            </div>
-            <button class="btn btn-success" onclick="generateDashboard()">
-                <i class="fas fa-magic"></i>
-                Generate Dashboard
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <div class="top-bar">
-            <button class="toggle-sidebar" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="page-title">Dashboard Generator</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="exportDashboard()">
-                    <i class="fas fa-download"></i>
-                    Export
-                </button>
-                <button class="btn btn-success" onclick="saveDashboard()">
-                    <i class="fas fa-save"></i>
-                    Save
-                </button>
-            </div>
-        </div>
-
-        <div class="dashboard-container">
-            <div class="connection-status">
-                <div class="status-indicator" id="connectionStatus"></div>
-                <div>
-                    <strong id="connectionText">Not Connected</strong>
-                    <p id="connectionDetails">Connect to Google Sheets to start creating dashboards</p>
-                </div>
-            </div>
-
-            <div class="data-preview" id="dataPreview" style="display: none;">
-                <h3>Data Preview</h3>
-                <div id="dataTable"></div>
-            </div>
-
-            <div class="charts-grid" id="chartsGrid">
-                <div class="empty-state">
-                    <i class="fas fa-chart-bar"></i>
-                    <h3>No Charts Generated Yet</h3>
-                    <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         // Global variables
         let sheetData = [];
@@ -1306,3 +1139,169 @@
                 // Group data by X-axis column
                 const groupedData = {};
                 sheetData
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
+
+    <!-- Swipe Indicator -->
+    <div class="swipe-indicator" id="swipeIndicator">
+        <i class="fas fa-arrow-right"></i>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <span>Signaplus</span>
+            </div>
+            <button class="toggle-sidebar mobile-close" onclick="closeMobileSidebar()" style="display: none;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Data Connection</div>
+            <div class="form-group">
+                <label for="sheetUrl">Google Sheets URL</label>
+                <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
+            </div>
+            <div class="form-group">
+                <label for="sheetName">Sheet Name</label>
+                <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
+            </div>
+            <button class="btn btn-primary" onclick="connectToSheet()">
+                <i class="fas fa-plug"></i>
+                Connect to Sheet
+            </button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Chart Selection</div>
+            <div class="chart-selector" id="chartSelector">
+                <div class="chart-option">
+                    <input type="checkbox" id="barChart" value="bar">
+                    <label for="barChart">Bar Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="lineChart" value="line">
+                    <label for="lineChart">Line Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="pieChart" value="pie">
+                    <label for="pieChart">Pie Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="doughnutChart" value="doughnut">
+                    <label for="doughnutChart">Doughnut Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="radarChart" value="radar">
+                    <label for="radarChart">Radar Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="polarAreaChart" value="polarArea">
+                    <label for="polarAreaChart">Polar Area Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="scatterChart" value="scatter">
+                    <label for="scatterChart">Scatter Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="bubbleChart" value="bubble">
+                    <label for="bubbleChart">Bubble Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="areaChart" value="area">
+                    <label for="areaChart">Area Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
+                    <label for="horizontalBarChart">Horizontal Bar</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="mixedChart" value="mixed">
+                    <label for="mixedChart">Mixed Chart</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="section-title">Chart Configuration</div>
+            <div class="form-group">
+                <label for="xAxisColumn">X-Axis Column</label>
+                <select id="xAxisColumn">
+                    <option value="">Select Column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="yAxisColumn">Y-Axis Column</label>
+                <select id="yAxisColumn">
+                    <option value="">Select Column</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="animationType">Animation Type</label>
+                <select id="animationType">
+                    <option value="easeInOutQuart">Ease In Out Quart</option>
+                    <option value="easeInOutBounce">Bounce</option>
+                    <option value="easeInOutElastic">Elastic</option>
+                    <option value="easeInOutCubic">Cubic</option>
+                    <option value="linear">Linear</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="generateDashboard()">
+                <i class="fas fa-magic"></i>
+                Generate Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="top-bar">
+            <button class="toggle-sidebar" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">Dashboard Generator</h1>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" onclick="exportDashboard()">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+                <button class="btn btn-success" onclick="saveDashboard()">
+                    <i class="fas fa-save"></i>
+                    Save
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-container">
+            <div class="connection-status">
+                <div class="status-indicator" id="connectionStatus"></div>
+                <div>
+                    <strong id="connectionText">Not Connected</strong>
+                    <p id="connectionDetails">Connect to Google Sheets to start creating dashboards</p>
+                </div>
+            </div>
+
+            <div class="data-preview" id="dataPreview" style="display: none;">
+                <h3>Data Preview</h3>
+                <div id="dataTable"></div>
+            </div>
+
+            <div class="charts-grid" id="chartsGrid">
+                <div class="empty-state">
+                    <i class="fas fa-chart-bar"></i>
+                    <h3>No Charts Generated Yet</h3>
+                    <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
+                </div>
+            </div>
+        </div>
+    </div>
