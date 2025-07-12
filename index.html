@@ -1379,7 +1379,7 @@
                 };
                 options.scales.y = {
                     beginAtZero: true,
-                    title: { display: true, text: yAxisLabel, color: '#555', font: { size: 16 } }
+                    title: { display: true, text: yAxisLabel.split(',').join(', '), color: '#555', font: { size: 16 } }
                 };
             }
 
@@ -1476,7 +1476,7 @@
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`;
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1503,7 +1503,7 @@
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.slice(1).join(', '))
+                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
