@@ -868,6 +868,8 @@
         document.addEventListener('touchstart', hideSwipeIndicator);
         document.addEventListener('click', hideSwipeIndicator);
 
+        document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
+
         // Show notification
         function showNotification(message, type = 'success') {
             const notification = document.createElement('div');
@@ -1180,7 +1182,7 @@
                 <label for="sheetName">Sheet Name</label>
                 <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
             </div>
-            <button class="btn btn-primary" onclick="connectToSheet()">
+            <button class="btn btn-primary" id="connectToSheetBtn">
                 <i class="fas fa-plug"></i>
                 Connect to Sheet
             </button>
