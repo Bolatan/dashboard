@@ -1236,22 +1236,41 @@
                     return { labels: chartData.map(item => item.label), datasets };
 
                 case 'scatter':
-                case 'bubble':
                     for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
                             label: `${yAxisColumns[i]} vs ${xAxisColumn}`,
                             data: sheetData.map(row => ({
                                 x: parseFloat(row[xAxisColumn] || 0),
-                                y: parseFloat(row[yAxisColumns[i]] || 0),
-                                r: chartType === 'bubble' ? parseFloat(row[yAxisColumns[i+1]] || 10) : undefined
+                                y: parseFloat(row[yAxisColumns[i]] || 0)
                             })),
                             backgroundColor: colors[i],
                             borderColor: colors[i],
                             pointRadius: 5,
                             pointHoverRadius: 7
                         });
-                        if (chartType === 'bubble') i++;
                     }
+                    return { datasets };
+
+                case 'bubble':
+                    if (yAxisColumns.length < 2) {
+                        console.error('Bubble chart requires at least three columns (X-axis, Y-axis, and radius).');
+                        return { labels: [], datasets: [] };
+                    }
+
+                    const yColumn = yAxisColumns[0];
+                    const rColumn = yAxisColumns[1];
+
+                    datasets.push({
+                        label: `${yColumn} vs ${xAxisColumn} (Size: ${rColumn})`,
+                        data: sheetData.map(row => ({
+                            x: parseFloat(row[xAxisColumn] || 0),
+                            y: parseFloat(row[yColumn] || 0),
+                            r: parseFloat(row[rColumn] || 10)
+                        })),
+                        backgroundColor: colors[0],
+                        borderColor: colors[0]
+                    });
+
                     return { datasets };
 
                 case 'mixed':
