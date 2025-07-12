@@ -1409,7 +1409,7 @@
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${Array.isArray(selectedColumns) ? selectedColumns.slice(1).join(', ') : ''} by ${Array.isArray(selectedColumns) ? selectedColumns[0] : ''}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1436,7 +1436,7 @@
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, Array.isArray(selectedColumns) ? selectedColumns[0] : '', Array.isArray(selectedColumns) ? selectedColumns.slice(1).join(', ') : '')
+                options: getChartOptions(chartType, animationConfig, selectedColumns[0], selectedColumns.slice(1).join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
