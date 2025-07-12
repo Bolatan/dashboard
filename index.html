@@ -723,7 +723,7 @@
         }
 
         .notification.show {
-            transform: translateX(0);
+            transform: translateY(0);
         }
 
         .notification.success {
@@ -904,241 +904,626 @@
             </div>
         </div>
     </div>
-</head>
-<body>
-    <!-- Loading Overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner"></div>
-    </div>
-
-    <!-- Mobile Overlay -->
-    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileSidebar()"></div>
-
-    <!-- Swipe Indicator -->
-    <div class="swipe-indicator" id="swipeIndicator">
-        <i class="fas fa-arrow-right"></i>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <i class="fas fa-chart-line"></i>
-                <span>Signaplus</span>
-            </div>
-            <button class="toggle-sidebar mobile-close" onclick="closeMobileSidebar()" style="display: none;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Data Connection</div>
-            <div class="form-group">
-                <label for="sheetUrl">Google Sheets URL</label>
-                <input type="url" id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." />
-            </div>
-            <div class="form-group">
-                <label for="sheetName">Sheet Name</label>
-                <input type="text" id="sheetName" placeholder="Sheet1" value="Sheet1" />
-            </div>
-            <button class="btn btn-primary" id="connectToSheetBtn">
-                <i class="fas fa-plug"></i>
-                Connect to Sheet
-            </button>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Chart Selection</div>
-            <div class="chart-selector" id="chartSelector">
-                <div class="chart-option">
-                    <input type="checkbox" id="barChart" value="bar">
-                    <label for="barChart">Bar Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="lineChart" value="line">
-                    <label for="lineChart">Line Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="pieChart" value="pie">
-                    <label for="pieChart">Pie Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="doughnutChart" value="doughnut">
-                    <label for="doughnutChart">Doughnut Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="radarChart" value="radar">
-                    <label for="radarChart">Radar Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="polarAreaChart" value="polarArea">
-                    <label for="polarAreaChart">Polar Area Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="scatterChart" value="scatter">
-                    <label for="scatterChart">Scatter Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="bubbleChart" value="bubble">
-                    <label for="bubbleChart">Bubble Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="areaChart" value="area">
-                    <label for="areaChart">Area Chart</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
-                    <label for="horizontalBarChart">Horizontal Bar</label>
-                </div>
-                <div class="chart-option">
-                    <input type="checkbox" id="mixedChart" value="mixed">
-                    <label for="mixedChart">Mixed Chart</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="section-title">Chart Configuration</div>
-            <div class="form-group">
-                <label for="xAxisColumn">X-Axis Column</label>
-                <select id="xAxisColumn">
-                    <option value="">Select Column</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="yAxisColumn">Y-Axis Column</label>
-                <select id="yAxisColumn">
-                    <option value="">Select Column</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="animationType">Animation Type</label>
-                <select id="animationType">
-                    <option value="easeInOutQuart">Ease In Out Quart</option>
-                    <option value="easeInOutBounce">Bounce</option>
-                    <option value="easeInOutElastic">Elastic</option>
-                    <option value="easeInOutCubic">Cubic</option>
-                    <option value="linear">Linear</option>
-                </select>
-            </div>
-            <button class="btn btn-success" onclick="generateDashboard()">
-                <i class="fas fa-magic"></i>
-                Generate Dashboard
-            </button>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <div class="top-bar">
-            <button class="toggle-sidebar" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="page-title">Dashboard Generator</h1>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-primary" onclick="exportDashboard()">
-                    <i class="fas fa-download"></i>
-                    Export
-                </button>
-                <button class="btn btn-success" onclick="saveDashboard()">
-                    <i class="fas fa-save"></i>
-                    Save
-                </button>
-            </div>
-        </div>
-
-        <div class="dashboard-container">
-            <div class="connection-status">
-                <div class="status-indicator" id="connectionStatus"></div>
-                <div>
-                    <strong id="connectionText">Not Connected</strong>
-                    <p id="connectionDetails">Connect to Google Sheets to start creating dashboards</p>
-                </div>
-            </div>
-
-            <div class="data-preview" id="dataPreview" style="display: none;">
-                <h3>Data Preview</h3>
-                <div id="dataTable"></div>
-            </div>
-
-            <div class="charts-grid" id="chartsGrid">
-                <div class="empty-state">
-                    <i class="fas fa-chart-bar"></i>
-                    <h3>No Charts Generated Yet</h3>
-                    <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
-                </div>
-            </div>
-        </div>
-    </div>
     <script>
         document.getElementById('connectToSheetBtn').addEventListener('click', connectToSheet);
 
-        async function connectToSheet() {
-            const sheetUrl = document.getElementById('sheetUrl').value;
+        // Global variable to store sheet data
+        let sheetData = [];
+
+        // Helper function to show loading overlay
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        // Helper function to hide loading overlay
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Helper function to update connection status display
+        function updateConnectionStatus(isConnected) {
+            const statusIndicator = document.getElementById('connectionStatus');
+            const connectionText = document.getElementById('connectionText');
+            const connectionDetails = document.getElementById('connectionDetails');
             const sheetName = document.getElementById('sheetName').value;
 
-            if (!sheetUrl) {
-                alert('Please enter a Google Sheets URL.');
-                return;
-            }
-
-            const sheetId = sheetUrl.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)[1];
-
-            if (!sheetId) {
-                alert('Invalid Google Sheets URL.');
-                return;
-            }
-
-            const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
-
-            try {
-                const response = await fetch(url);
-                const data = await response.text();
-
-                const rows = data.split('\n');
-                const headers = rows[0].split(',');
-
-                let html = '<table class="data-table">';
-                html += '<thead><tr>';
-                headers.forEach(header => {
-                    html += `<th>${header}</th>`;
-                });
-                html += '</tr></thead>';
-                html += '<tbody>';
-                for (let i = 1; i < rows.length; i++) {
-                    const cells = rows[i].split(',');
-                    html += '<tr>';
-                    cells.forEach(cell => {
-                        html += `<td>${cell}</td>`;
-                    });
-                    html += '</tr>';
-                }
-                html += '</tbody></table>';
-
-                document.getElementById('dataTable').innerHTML = html;
-                document.getElementById('dataPreview').style.display = 'block';
-
-                document.getElementById('connectionStatus').classList.add('connected');
-                document.getElementById('connectionText').textContent = 'Connected';
-                document.getElementById('connectionDetails').textContent = `Successfully connected to ${sheetName}`;
-
-                const xAxisColumn = document.getElementById('xAxisColumn');
-                const yAxisColumn = document.getElementById('yAxisColumn');
-
-                xAxisColumn.innerHTML = '<option value="">Select Column</option>';
-                yAxisColumn.innerHTML = '<option value="">Select Column</option>';
-
-                headers.forEach(header => {
-                    const option = document.createElement('option');
-                    option.value = header;
-                    option.textContent = header;
-                    xAxisColumn.appendChild(option.cloneNode(true));
-                    yAxisColumn.appendChild(option);
-                });
-            } catch (error) {
-                alert('Error connecting to Google Sheets.');
+            if (isConnected) {
+                statusIndicator.classList.add('connected');
+                connectionText.textContent = 'Connected';
+                connectionDetails.textContent = `Successfully connected to ${sheetName}`;
+            } else {
+                statusIndicator.classList.remove('connected');
+                connectionText.textContent = 'Not Connected';
+                connectionDetails.textContent = 'Failed to connect to Google Sheets';
             }
         }
+
+        // Helper function to parse JSON data from Google Sheets API
+        function parseJSON(jsonData) {
+            const entries = jsonData.feed.entry;
+            if (!entries || entries.length === 0) {
+                return [];
+            }
+
+            const parsedData = [];
+            entries.forEach(entry => {
+                const row = {};
+                for (const key in entry) {
+                    if (key.startsWith('gsx$')) {
+                        const columnName = key.substring(4); // Remove 'gsx$' prefix
+                        row[columnName] = entry[key].$t;
+                    }
+                }
+                parsedData.push(row);
+            });
+            return parsedData;
+        }
+
+        // Helper function to populate column selectors based on sheet data headers
+        function populateColumnSelectors() {
+            if (sheetData.length === 0) return;
+
+            const headers = Object.keys(sheetData[0]);
+            const xAxisColumnSelect = document.getElementById('xAxisColumn');
+            const yAxisColumnSelect = document.getElementById('yAxisColumn');
+
+            xAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
+            yAxisColumnSelect.innerHTML = '<option value="">Select Column</option>';
+
+            headers.forEach(header => {
+                const optionX = document.createElement('option');
+                optionX.value = header;
+                optionX.textContent = header;
+                xAxisColumnSelect.appendChild(optionX);
+
+                const optionY = document.createElement('option');
+                optionY.value = header;
+                optionY.textContent = header;
+                yAxisColumnSelect.appendChild(optionY);
+            });
+        }
+
+        // Helper function to show data preview table
+        function showDataPreview() {
+            if (sheetData.length === 0) {
+                document.getElementById('dataPreview').style.display = 'none';
+                return;
+            }
+
+            const headers = Object.keys(sheetData[0]);
+            let html = '<table class="data-table">';
+            html += '<thead><tr>';
+            headers.forEach(header => {
+                html += `<th>${header}</th>`;
+            });
+            html += '</tr></thead>';
+            html += '<tbody>';
+            // Limit preview to first 10 rows for performance
+            sheetData.slice(0, 10).forEach(row => { 
+                html += '<tr>';
+                headers.forEach(header => {
+                    html += `<td>${row[header] || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+
+            document.getElementById('dataTable').innerHTML = html;
+            document.getElementById('dataPreview').style.display = 'block';
+        }
+
+        // Connect to Google Sheets
+        async function connectToSheet() {
+            const sheetUrl = document.getElementById('sheetUrl').value;
+            const sheetName = document.getElementById('sheetName').value; // sheetName is not used in the new API endpoint
+
+            if (!sheetUrl) {
+                showNotification('Please enter a Google Sheets URL', 'error');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Extract sheet ID from various URL formats
+                let sheetId;
+                const patterns = [
+                    /\/d\/([a-zA-Z0-9-_]+)/,
+                    /spreadsheets\/d\/([a-zA-Z0-9-_]+)/,
+                    /key=([a-zA-Z0-9-_]+)/
+                ];
+                
+                for (const pattern of patterns) {
+                    const match = sheetUrl.match(pattern);
+                    if (match) {
+                        sheetId = match[1];
+                        break;
+                    }
+                }
+                
+                if (!sheetId) {
+                    throw new Error('Invalid Google Sheets URL format');
+                }
+
+                // Using the Google Sheets JSON feed for public sheets
+                const url = `https://spreadsheets.google.com/feeds/list/${sheetId}/od6/public/values?alt=json`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jsonData = await response.json();
+
+                if (!jsonData.feed || !jsonData.feed.entry) {
+                    throw new Error('No data found in the sheet or sheet is not public');
+                }
+
+                sheetData = parseJSON(jsonData);
+
+                if (sheetData.length === 0) {
+                    throw new Error('Sheet appears to be empty');
+                }
+
+                updateConnectionStatus(true);
+                populateColumnSelectors();
+                showDataPreview();
+                showNotification('Successfully connected to Google Sheets!', 'success');
+            } catch (error) {
+                console.error('Connection Error:', error);
+                let errorMessage = 'Failed to connect to Google Sheet. ';
+                
+                if (error.message.includes('Invalid Google Sheets URL')) {
+                    errorMessage += 'Please check the URL format.';
+                } else if (error.message.includes('not public')) {
+                    errorMessage += 'Make sure the sheet is publicly accessible and shared with "Anyone with the link".';
+                } else if (error.message.includes('empty')) {
+                    errorMessage += 'The sheet appears to be empty.';
+                } else if (error.message.includes('HTTP error! status: 400')) {
+                    errorMessage += 'Bad request. This might be due to an incorrect sheet ID or a private sheet.';
+                } else if (error.message.includes('HTTP error! status: 404')) {
+                    errorMessage += 'Sheet not found. Please verify the sheet ID.';
+                } else {
+                    errorMessage += 'Please check the URL and sharing settings.';
+                }
+                
+                showNotification(errorMessage, 'error');
+                updateConnectionStatus(false);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Prepare chart data
+        function prepareChartData(xAxisColumn, yAxisColumn, chartType, sheetData) {
+            const colors = [
+                'rgba(52, 152, 219, 0.8)', // Primary blue
+                'rgba(46, 204, 113, 0.8)', // Success green
+                'rgba(241, 196, 15, 0.8)', // Warning yellow
+                'rgba(231, 76, 60, 0.8)',  // Danger red
+                'rgba(155, 89, 182, 0.8)', // Amethyst
+                'rgba(26, 188, 156, 0.8)', // Turquoise
+                'rgba(230, 126, 34, 0.8)', // Carrot
+                'rgba(52, 73, 94, 0.8)',   // Wet Asphalt
+                'rgba(149, 165, 166, 0.8)',// Concrete
+                'rgba(22, 160, 133, 0.8)'  // Nephritis
+            ];
+
+            if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+                const groupedData = {};
+                sheetData.forEach(row => {
+                    const key = row[xAxisColumn];
+                    if (!groupedData[key]) {
+                        groupedData[key] = 0;
+                    }
+                    groupedData[key] += parseFloat(row[yAxisColumn] || 0);
+                });
+
+                return {
+                    labels: Object.keys(groupedData),
+                    datasets: [{
+                        data: Object.values(groupedData),
+                        backgroundColor: colors,
+                        borderColor: 'white',
+                        borderWidth: 1
+                    }]
+                };
+            } else if (chartType === 'scatter' || chartType === 'bubble') {
+                return {
+                    datasets: [{
+                        label: `${yAxisColumn} vs ${xAxisColumn}`,
+                        data: sheetData.map(row => ({
+                            x: parseFloat(row[xAxisColumn] || 0),
+                            y: parseFloat(row[yAxisColumn] || 0)
+                        })),
+                        backgroundColor: colors[0],
+                        borderColor: colors[0],
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                };
+            } else if (chartType === 'mixed') {
+                const labels = [];
+                const lineData = [];
+                const barData = [];
+
+                sheetData.forEach(row => {
+                    labels.push(row[xAxisColumn]);
+                    lineData.push(parseFloat(row[yAxisColumn] || 0));
+                    barData.push(parseFloat(row[yAxisColumn] || 0) * 0.8); // Example: bar data is 80% of line data
+                });
+
+                return {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'line',
+                            label: `${yAxisColumn} (Line)`,
+                            data: lineData,
+                            borderColor: colors[0],
+                            backgroundColor: 'rgba(0,0,0,0)', // Transparent fill
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            type: 'bar',
+                            label: `${yAxisColumn} (Bar)`,
+                            data: barData,
+                            backgroundColor: colors[1],
+                            borderColor: colors[1],
+                            borderWidth: 1
+                        }
+                    ]
+                };
+            } else {
+                const labels = [];
+                const data = [];
+                const borderColors = [];
+
+                sheetData.forEach((row, index) => {
+                    labels.push(row[xAxisColumn]);
+                    data.push(parseFloat(row[yAxisColumn] || 0));
+                    borderColors.push(colors[index % colors.length]); // Cycle through colors for borders
+                });
+
+                return {
+                    labels: labels,
+                    datasets: [{
+                        label: yAxisColumn,
+                        data: data,
+                        backgroundColor: chartType === 'line' || chartType === 'area' ? 'rgba(0,0,0,0)' : colors, // Transparent background for line/area
+                        borderColor: borderColors,
+                        borderWidth: 2,
+                        fill: chartType === 'area',
+                        tension: chartType === 'line' ? 0.3 : 0 // Smooth lines for line chart
+                    }]
+                };
+            }
+        }
+
+        // Global variable to store active chart instances
+        let activeCharts = {};
+
+        function getChartOptions(chartType, animationConfig, xAxisLabel, yAxisLabel) {
+            const options = {
+                animation: animationConfig,
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea',
+                        position: 'top',
+                        labels: {
+                            color: '#333',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== undefined) {
+                                    label += context.parsed.y;
+                                } else if (context.parsed.x !== undefined) { // For scatter/bubble
+                                    label += `(${context.parsed.x}, ${context.parsed.y})`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
+                        title: {
+                            display: true,
+                            text: xAxisLabel,
+                            color: '#555',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        grid: {
+                            display: false
+                        },
+                        beginAtZero: true
+                    },
+                    y: {
+                        display: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'polarArea' && chartType !== 'radar',
+                        title: {
+                            display: true,
+                            text: yAxisLabel,
+                            color: '#555',
+                            font: {
+                                size: 16
+                            }
+                        },
+                        beginAtZero: true
+                    }
+                }
+            };
+
+            if (chartType === 'horizontalBar') {
+                options.indexAxis = 'y';
+                // Swap x and y axis titles for horizontal bar chart display
+                const originalXTitle = options.scales.x.title.text;
+                const originalYTitle = options.scales.y.title.text;
+                options.scales.x.title.text = originalYTitle;
+                options.scales.y.title.text = originalXTitle;
+            }
+
+            if (chartType === 'scatter' || chartType === 'bubble') {
+                options.scales.x.type = 'linear';
+                options.scales.x.position = 'bottom';
+                options.scales.y.type = 'linear';
+            }
+
+            if (chartType === 'radar') {
+                options.scales = {
+                    r: {
+                        angleLines: {
+                            display: false
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 100, // Default max, can be adjusted based on data
+                        pointLabels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                };
+            }
+
+            if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
+                delete options.scales; // These charts don't use scales
+            }
+
+            return options;
+        }
+
+        function generateDashboard() {
+            const xAxisColumn = document.getElementById('xAxisColumn').value;
+            const yAxisColumn = document.getElementById('yAxisColumn').value;
+            const animationType = document.getElementById('animationType').value;
+            const selectedChartTypes = Array.from(document.querySelectorAll('#chartSelector input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+
+            if (!xAxisColumn || !yAxisColumn || selectedChartTypes.length === 0) {
+                showNotification('Please select X-Axis, Y-Axis columns, and at least one chart type.', 'warning');
+                return;
+            }
+
+            if (sheetData.length === 0) {
+                showNotification('No data available. Please connect to a Google Sheet first.', 'error');
+                return;
+            }
+
+            const chartsGrid = document.getElementById('chartsGrid');
+            chartsGrid.innerHTML = ''; // Clear existing charts
+
+            // Destroy previous chart instances
+            for (const chartId in activeCharts) {
+                if (activeCharts[chartId]) {
+                    activeCharts[chartId].destroy();
+                }
+            }
+            activeCharts = {}; // Reset active charts
+
+            selectedChartTypes.forEach(chartType => {
+                const chartData = prepareChartData(xAxisColumn, yAxisColumn, chartType, sheetData);
+                renderChart(chartType, chartData, xAxisColumn, yAxisColumn, animationType);
+            });
+
+            if (selectedChartTypes.length === 0) {
+                chartsGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>No Charts Generated Yet</h3>
+                        <p>Connect to your Google Sheets, select chart types, and generate your dashboard</p>
+                    </div>
+                `;
+            }
+
+            showNotification('Dashboard generated successfully!', 'success');
+        }
+
+        function renderChart(chartType, chartData, xAxisLabel, yAxisLabel, animationType) {
+            const chartsGrid = document.getElementById('chartsGrid');
+
+            const chartCard = document.createElement('div');
+            chartCard.className = 'chart-card';
+
+            const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${yAxisLabel} by ${xAxisLabel}`;
+
+            chartCard.innerHTML = `
+                <div class="chart-header">
+                    <h2 class="chart-title">${titleText}</h2>
+                    <div class="chart-actions">
+                        <button class="btn-download" onclick="downloadChart('${chartId}', '${titleText}')">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="${chartId}"></canvas>
+                </div>
+            `;
+            chartsGrid.appendChild(chartCard);
+
+            const ctx = document.getElementById(chartId).getContext('2d');
+
+            const animationConfig = {
+                duration: 1000,
+                easing: animationType
+            };
+
+            const chartConfig = {
+                type: chartType === 'horizontalBar' ? 'bar' : chartType,
+                data: chartData,
+                options: getChartOptions(chartType, animationConfig, xAxisLabel, yAxisLabel)
+            };
+            
+            activeCharts[chartId] = new Chart(ctx, chartConfig);
+        }
+
+        function downloadChart(chartId, title) {
+            const canvas = document.getElementById(chartId);
+            const imageURI = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = imageURI;
+            a.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showNotification('Chart downloaded successfully!', 'success');
+        }
+
+        function exportDashboard() {
+            // Functionality to export the entire dashboard (e.g., as PDF or a single image)
+            // This would be more complex, likely involving a server-side rendering or a library like html2canvas
+            showNotification('Export Dashboard functionality is under development.', 'info');
+        }
+
+        function saveDashboard() {
+            // Functionality to save the current dashboard configuration (e.g., to local storage or a backend)
+            showNotification('Save Dashboard functionality is under development.', 'info');
+        }
+
+
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const toggleSidebarBtn = document.querySelector('.toggle-sidebar');
+        const mobileCloseBtn = document.querySelector('.mobile-close');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const swipeIndicator = document.getElementById('swipeIndicator');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        }
+
+        // Mobile sidebar handling
+        function openMobileSidebar() {
+            sidebar.classList.add('mobile-open');
+            mobileOverlay.classList.add('active');
+            mobileCloseBtn.style.display = 'block';
+            toggleSidebarBtn.style.display = 'none'; // Hide the hamburger icon when sidebar is open
+        }
+
+        function closeMobileSidebar() {
+            sidebar.classList.remove('mobile-open');
+            mobileOverlay.classList.remove('active');
+            mobileCloseBtn.style.display = 'none';
+            toggleSidebarBtn.style.display = 'block'; // Show hamburger icon when sidebar is closed
+        }
+
+        // Detect if it's a mobile device (for swipe gesture)
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+
+        if (isMobileDevice()) {
+            // Adjust sidebar toggle for mobile
+            toggleSidebarBtn.removeEventListener('click', toggleSidebar); // Remove desktop click listener
+            toggleSidebarBtn.addEventListener('click', openMobileSidebar); // Add mobile click listener
+
+            // Add swipe gesture for mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches[0].clientX < 50 && !sidebar.classList.contains('mobile-open')) { // Only detect swipe from left edge if sidebar is closed
+                    touchStartX = e.touches[0].clientX;
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (touchStartX > 0) { // Only track if a swipe started
+                    touchEndX = e.touches[0].clientX;
+                }
+            });
+
+            document.addEventListener('touchend', () => {
+                if (touchStartX > 0) {
+                    const swipeDistance = touchEndX - touchStartX;
+                    if (swipeDistance > 50 && !sidebar.classList.contains('mobile-open')) { // Swiped right
+                        openMobileSidebar();
+                        swipeIndicator.style.display = 'none'; // Hide indicator once swiped
+                    } else if (swipeDistance < -50 && sidebar.classList.contains('mobile-open')) { // Swiped left
+                        closeMobileSidebar();
+                    }
+                    touchStartX = 0; // Reset
+                    touchEndX = 0; // Reset
+                }
+            });
+
+            // Initial state for mobile
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed'); // Start collapsed on mobile
+                mainContent.classList.add('expanded'); // Adjust main content for collapsed sidebar
+                toggleSidebarBtn.style.display = 'block'; // Ensure hamburger is visible
+            }
+        } else {
+            // For desktop, ensure mobile close button and overlay are hidden
+            mobileCloseBtn.style.display = 'none';
+            mobileOverlay.style.display = 'none';
+            swipeIndicator.style.display = 'none';
+        }
+
+        // Notification system
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100); // Small delay to allow CSS transition
+
+            // Hide and remove after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                notification.addEventListener('transitionend', () => {
+                    notification.remove();
+                }, { once: true });
+            }, 3000);
+        }
+
+        // Example usage:
+        // showNotification('This is a success message!', 'success');
+        // showNotification('Something went wrong!', 'error');
+        // showNotification('Heads up, something needs your attention!', 'warning');
+        // showNotification('Just an informational message.', 'info');
+
     </script>
-    </body>
+</body>
 </html>
