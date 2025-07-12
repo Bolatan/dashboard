@@ -940,12 +940,6 @@
                     const optionsDiv = document.createElement('div');
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
-                    optionsDiv.innerHTML += `
-                        <div class="form-group">
-                            <label for="${chartType}-yAxis">Y-Axis</label>
-                            <select id="${chartType}-yAxis" class="chart-option-select" multiple></select>
-                        </div>
-                    `;
                     if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
                         optionsDiv.innerHTML += `
                             <div class="form-group">
