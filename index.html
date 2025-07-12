@@ -938,6 +938,7 @@
                 document.querySelectorAll('#chartSelector input[type="checkbox"]:checked').forEach(checkedBox => {
                     const chartType = checkedBox.value;
                     const optionsDiv = document.createElement('div');
+                    optionsDiv.id = `${chartType}-options`;
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
                     // Only add X-Axis option for charts that use X-Y axis (not pie, doughnut, radar, polarArea)
