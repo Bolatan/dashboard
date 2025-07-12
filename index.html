@@ -950,19 +950,18 @@
                             </div>
                         `;
                     }
-                    // Add scatter chart without X-Axis option since it uses both X and Y coordinates differently
                     if (chartType === 'scatter') {
-                        optionsDiv.innerHTML += `
-                            <div class="form-group">
-                                <label for="${chartType}-xAxis">X-Axis</label>
-                                <select id="${chartType}-xAxis" class="chart-option-select"></select>
-                            </div>
-                            <div class="form-group">
-                                <label for="${chartType}-yAxis">Y-Axis</label>
-                                <select id="${chartType}-yAxis" class="chart-option-select"></select>
-                            </div>
-                        `;
-                    }
+    optionsDiv.innerHTML += `
+        <div class="form-group">
+            <label for="${chartType}-xAxis">X-Axis</label>
+            <select id="${chartType}-xAxis" class="chart-option-select"></select>
+        </div>
+        <div class="form-group">
+            <label for="${chartType}-yAxis">Y-Axis (Select Multiple)</label>
+            <select id="${chartType}-yAxis" class="chart-option-select" multiple></select>
+        </div>
+    `;
+}
                     chartSpecificOptions.appendChild(optionsDiv);
                 });
                 populateColumnSelectors();
@@ -1176,7 +1175,7 @@
                 if (error.message.includes('Invalid Google Sheets URL')) {
                     errorMessage += 'Please check the URL format.';
                 } else if (error.message.includes('published to the web')) {
-                    errorMessage += 'Please publish the sheet to the web: File → Share → Publish to the web.';
+                    errorMessage += 'Please publish the sheet to the web: File → Share → Publish → to the web.';
                 } else if (error.message.includes('empty')) {
                     errorMessage += 'The sheet appears to be empty.';
                 } else {
