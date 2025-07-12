@@ -1302,8 +1302,42 @@
         // Prepare chart data
         function prepareChartData(xAxisColumn, yAxisColumn, chartType) {
             const colors = colorPalettes.primary;
+            const labels = [...new Set(sheetData.map(item => item[xAxisColumn]))];
             
             if (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea') {
-                // Group data by X-axis column
-                const groupedData = {};
-                sheetData
+                const data = labels.map(label => {
+                    return sheetData
+                        .filter(item => item[xAxisColumn] === label)
+                        .reduce((sum, item) => sum + item[yAxisColumn], 0);
+                });
+
+                return {
+                    labels: labels,
+                    datasets: [{
+                        label: yAxisColumn,
+                        data: data,
+                        backgroundColor: colors,
+                        borderColor: '#ffffff',
+                        borderWidth: 1
+                    }]
+                };
+            } else {
+                const data = labels.map(label => {
+                    const value = sheetData
+                        .filter(item => item[xAxisColumn] === label)
+                        .reduce((sum, item) => sum + item[yAxisColumn], 0);
+                    return { x: label, y: value };
+                });
+
+                return {
+                    datasets: [{
+                        label: yAxisColumn,
+                        data: data,
+                        backgroundColor: colors[0],
+                        borderColor: colors[0],
+                        fill: chartType === 'area',
+                        tension: 0.4
+                    }]
+                };
+            }
+        }
