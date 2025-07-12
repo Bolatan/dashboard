@@ -946,10 +946,10 @@
                                 <label for="${chartType}-xAxis">X-Axis</label>
                                 <select id="${chartType}-xAxis" class="chart-option-select"></select>
                             </div>
-                            <div class="form-group">
-                                <label for="${chartType}-yAxis">Y-Axis (optional)</label>
-                                <select id="${chartType}-yAxis" class="chart-option-select"></select>
-                            </div>
+<div class="form-group">
+    <label for="${chartType}-yAxis">Y-Axis (optional)</label>
+    <select id="${chartType}-yAxis" class="chart-option-select"></select>
+</div>
                         `;
                     }
                     chartSpecificOptions.appendChild(optionsDiv);
@@ -1199,11 +1199,10 @@
             }
 
             const xAxisColumn = chartOptions.xAxis || selectedColumns[0];
-            const yAxisColumn = chartOptions.yAxis || null;
-            const labels = sheetData.map(row => row[xAxisColumn]);
-            const datasets = [];
-            const dataColumns = yAxisColumn ? [yAxisColumn] : selectedColumns.filter(c => c !== xAxisColumn);
-
+const yAxisColumn = chartOptions.yAxis || null;
+const labels = sheetData.map(row => row[xAxisColumn]);
+const datasets = [];
+const dataColumns = yAxisColumn ? [yAxisColumn] : selectedColumns.filter(c => c !== xAxisColumn);
 
             switch (chartType) {
                 case 'pie':
@@ -1225,30 +1224,35 @@
 
                 case 'scatter':
                 case 'bubble':
-                    for (let i = 0; i < dataColumns.length; i++) {
-                        datasets.push({
-                            label: `${dataColumns[i]} vs ${xAxisColumn}`,
-                            data: sheetData.map(row => ({
-                                x: parseFloat(row[xAxisColumn] || 0),
-                                y: parseFloat(row[dataColumns[i]] || 0),
-                                r: chartType === 'bubble' ? parseFloat(row[selectedColumns[i+2]] || 10) : undefined
+for (let i = 0; i < dataColumns.length; i++) {
+    datasets.push({
+        label: `${dataColumns[i]} vs ${xAxisColumn}`,
+        data: sheetData.map(row => ({
+            x: parseFloat(row[xAxisColumn] || 0),
+            y: parseFloat(row[dataColumns[i]] || 0),
+            r: chartType === 'bubble' ? parseFloat(row[selectedColumns[i+2]] || 10) : undefined
+        }))
+    });
+}
                             })),
                             backgroundColor: colors[i],
                             borderColor: colors[i],
                             pointRadius: 5,
                             pointHoverRadius: 7
                         });
-                        if (chartType === 'bubble') i++;
+if (chartType === 'bubble') i++;
                     }
                     return { datasets };
 
                 case 'mixed':
-                    for (let i = 0; i < dataColumns.length; i++) {
-                        const isLine = i % 2 !== 0;
-                        datasets.push({
-                            type: isLine ? 'line' : 'bar',
-                            label: `${dataColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
-                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+for (let i = 0; i < dataColumns.length; i++) {
+    const isLine = i % 2 !== 0;
+    datasets.push({
+        type: isLine ? 'line' : 'bar',
+        label: `${dataColumns[i]} (${isLine ? 'Line' : 'Bar'})`,
+        data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+    });
+}
                             borderColor: colors[i],
                             backgroundColor: isLine ? 'rgba(0,0,0,0)' : colors[i],
                             borderWidth: 2,
@@ -1260,10 +1264,12 @@
                     return { labels, datasets };
 
                 case 'radar':
-                    for (let i = 0; i < dataColumns.length; i++) {
-                        datasets.push({
-                            label: dataColumns[i],
-                            data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+for (let i = 0; i < dataColumns.length; i++) {
+    datasets.push({
+        label: dataColumns[i],
+        data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+    });
+}
                             backgroundColor: colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
@@ -1277,6 +1283,7 @@
                         datasets.push({
                             label: dataColumns[i],
                             data: sheetData.map(row => parseFloat(row[dataColumns[i]] || 0)),
+
                             backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
@@ -1387,7 +1394,7 @@
 
                 if (['bar', 'line', 'area', 'scatter', 'bubble'].includes(chartType)) {
                     chartOptions.xAxis = document.getElementById(`${chartType}-xAxis`).value;
-                    chartOptions.yAxis = document.getElementById(`${chartType}-yAxis`).value;
+chartOptions.yAxis = document.getElementById(`${chartType}-yAxis`).value;
                 }
 
                 if (selectedColumns.length >= 2 || (chartType === 'pie' || chartType === 'doughnut' || chartType === 'polarArea')) {
