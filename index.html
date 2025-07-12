@@ -102,8 +102,7 @@
             padding: 10px;
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
-
-background: grey;
+            background: grey;
 
             color: white;
             font-size: 0.9em;
@@ -1347,7 +1346,7 @@ background: grey;
         }
 
         function generateDashboard() {
-            const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value);
+const selectedColumns = Array.from(document.getElementById('columnSelector').selectedOptions).map(option => option.value).filter(Boolean);
             const animationType = document.getElementById('animationType').value;
             const selectedChartTypes = Array.from(document.querySelectorAll('#chartSelector input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
@@ -1381,12 +1380,12 @@ background: grey;
                 if (['bar', 'line', 'pie', 'doughnut', 'radar', 'polarArea', 'scatter', 'bubble', 'area', 'horizontalBar', 'mixed'].includes(chartType) && selectedColumns.length >= 2) {
 const chartData = prepareChartData(selectedColumns[0], selectedColumns[1], chartType, sheetData);
 renderChart(chartType, chartData, selectedColumns[0], selectedColumns[1], animationType);
-                } else {
+} else { // This 'else' likely closes a conditional block from earlier in your code
                     showNotification(`Chart type '${chartType}' requires at least 2 columns.`, 'warning');
                 }
             });
 
-            if (selectedChartTypes.length === 0) {
+            if (chartsGrid.innerHTML === '') {
                 chartsGrid.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-chart-bar"></i>
