@@ -1267,17 +1267,30 @@
                     return { labels, datasets };
 
                 case 'radar':
-                    for (let i = 0; i < yAxisColumns.length; i++) {
+                    // For radar charts, use all selected columns as data points
+                    // Each row becomes a dataset, and columns become the radar axes
+                    const radarLabels = selectedColumns; // All selected columns become the axes
+                    
+                    // Take first few rows as datasets (limit to avoid clutter)
+                    const maxDatasets = Math.min(sheetData.length, 5);
+                    
+                    for (let i = 0; i < maxDatasets; i++) {
+                        const row = sheetData[i];
+                        const rowLabel = row[selectedColumns[0]] || `Dataset ${i + 1}`;
+                        
                         datasets.push({
-                            label: yAxisColumns[i],
-                            data: sheetData.map(row => parseFloat(row[yAxisColumns[i]] || 0)),
-                            backgroundColor: colors[i],
+                            label: rowLabel,
+                            data: selectedColumns.map(col => parseFloat(row[col] || 0)),
+                            backgroundColor: colors[i] + '40', // Add transparency
                             borderColor: colors[i],
                             borderWidth: 2,
                             fill: true,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
                         });
                     }
-                    return { labels, datasets };
+                    
+                    return { labels: radarLabels, datasets };
 
                 default: // bar, line, area, horizontalBar
                     for (let i = 0; i < yAxisColumns.length; i++) {
