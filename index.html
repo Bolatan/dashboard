@@ -1221,19 +1221,23 @@
                         return { labels: [], datasets: [] };
                     }
 
-                    const chartData = sheetData.map(row => ({
-                        label: row[labelColumn],
-                        data: parseFloat(row[dataColumn] || 0)
-                    }));
+                    const groupedData = {};
+                    sheetData.forEach(row => {
+                        const key = row[labelColumn] || 'Unknown';
+                        if (!groupedData[key]) {
+                            groupedData[key] = 0;
+                        }
+                        groupedData[key] += parseFloat(row[dataColumn] || 0);
+                    });
 
                     datasets.push({
-                        data: chartData.map(item => item.data),
-                        backgroundColor: colors.slice(0, chartData.length),
+                        data: Object.values(groupedData),
+                        backgroundColor: colors.slice(0, Object.keys(groupedData).length),
                         borderColor: 'white',
                         borderWidth: 2
                     });
 
-                    return { labels: chartData.map(item => item.label), datasets };
+                    return { labels: Object.keys(groupedData), datasets };
 
                 case 'scatter':
                     for (let i = 0; i < yAxisColumns.length; i++) {
