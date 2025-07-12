@@ -1171,6 +1171,10 @@
                 'rgba(22, 160, 133, 0.8)'  // Nephritis
             ];
 
+if (!Array.isArray(sheetData)) {
+    console.error("sheetData is not an array:", sheetData);
+    return { labels: [], datasets: [] };
+}
             const labels = sheetData.map(row => row[selectedColumns[0]]);
             const datasets = [];
 
