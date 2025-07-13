@@ -6,6 +6,8 @@
     <title>Signaplus Dashboard Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -1542,8 +1544,30 @@ visibility: hidden;
 
         function exportDashboard() {
             showLoading();
-            window.print();
-            hideLoading();
+            const { jsPDF } = window.jspdf;
+            const chartsGrid = document.getElementById('chartsGrid');
+
+            html2canvas(chartsGrid, {
+                scale: 2, // Higher scale for better quality
+                useCORS: true,
+                allowTaint: true,
+                logging: true,
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height]
+                });
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                pdf.save('dashboard.pdf');
+                hideLoading();
+                showNotification('Dashboard exported as PDF!', 'success');
+            }).catch(err => {
+                console.error("Error exporting dashboard:", err);
+                hideLoading();
+                showNotification('Error exporting dashboard. See console for details.', 'error');
+            });
         }
 
         function saveDashboard() {
