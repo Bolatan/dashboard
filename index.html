@@ -746,10 +746,11 @@
                 display: block !important;
                 page-break-after: always;
             }
-            body * {
+            body > *:not(.leading-page) {
                 visibility: hidden;
             }
-            .leading-page, .leading-page *, .charts-grid, .charts-grid * {
+            .leading-page, .charts-grid, .charts-grid * {
+
                 visibility: visible;
             }
             .charts-grid {
@@ -761,7 +762,8 @@
                 flex-direction: column;
             }
             .chart-card {
-                width: 90%;
+                width: 80%;
+   
                 margin: 0 auto;
                 page-break-inside: avoid;
             }
@@ -772,10 +774,11 @@
                 display: block !important;
                 page-break-after: always;
             }
-            body * {
+            body > *:not(.leading-page) {
                 visibility: hidden;
             }
-            .leading-page, .leading-page *, .charts-grid, .charts-grid * {
+            .leading-page, .charts-grid, .charts-grid * {
+
                 visibility: visible;
             }
             .charts-grid {
@@ -785,7 +788,8 @@
                 width: 100%;
             }
             .chart-card {
-                width: 90%;
+                width: 80%;
+
                 margin: 0 auto;
                 page-break-after: always;
             }
