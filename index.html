@@ -742,10 +742,10 @@
 
         @media print {
             body * {
-visibility: hidden;
-}
-.charts-grid, .charts-grid * {
-    visibility: visible;
+                visibility: hidden;
+            }
+            .charts-grid, .charts-grid * {
+                visibility: visible;
             }
             .charts-grid {
                 position: absolute;
@@ -1541,37 +1541,8 @@ visibility: hidden;
             showNotification('Chart downloaded successfully!', 'success');
         }
 
-        async function exportDashboard() {
-            showLoading();
-            const { PDFDocument, rgb } = PDFLib;
-
-            const pdfDoc = await PDFDocument.create();
-
-            for (const chartId in activeCharts) {
-                if (activeCharts[chartId]) {
-                    const chart = activeCharts[chartId];
-                    const dataUrl = chart.toBase64Image();
-                    const pngImage = await pdfDoc.embedPng(dataUrl);
-                    const page = pdfDoc.addPage();
-                    page.drawImage(pngImage, {
-                        x: 50,
-                        y: 100,
-                        width: page.getWidth() - 100,
-                        height: (page.getWidth() - 100) * (pngImage.height / pngImage.width),
-                    });
-                }
-            }
-
-            const pdfBytes = await pdfDoc.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'dashboard.pdf';
-            link.click();
-            URL.revokeObjectURL(link.href);
-
-            hideLoading();
-            showNotification('Dashboard exported as PDF!', 'success');
+        function exportDashboard() {
+            window.print();
         }
 
         function saveDashboard() {
