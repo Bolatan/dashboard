@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
     <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
+
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -760,6 +761,7 @@
             .chart-card {
                 width: 100%;
                 page-break-inside: avoid;
+
             }
         }
 
@@ -859,6 +861,7 @@
                 <div class="chart-option">
                     <input type="checkbox" id="heatmapChart" value="heatmap">
                     <label for="heatmapChart">Heatmap Chart</label>
+
                 </div>
                 <div class="chart-option">
                     <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
@@ -987,6 +990,7 @@
 
                     // Only add X-Axis option for charts that use X-Y axis (not pie, doughnut, radar, polarArea)
                     if (['bar', 'line', 'area', 'bubble', 'mixed', 'horizontalBar', 'heatmap'].includes(chartType)) {
+
                         optionsDiv.innerHTML += `
                             <div class="form-group">
                                 <label for="${chartType}-xAxis">X-Axis</label>
