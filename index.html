@@ -6,6 +6,7 @@
     <title>Signaplus Dashboard Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -737,6 +738,24 @@
         .notification.warning {
             background: #f39c12;
         }
+
+        @media print {
+            body * {
+                display: none;
+            }
+            .charts-grid, .charts-grid * {
+                display: block;
+            }
+            .charts-grid {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .chart-card {
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1379,7 +1398,7 @@
                 };
                 options.scales.y = {
                     beginAtZero: true,
-                    title: { display: true, text: yAxisLabel, color: '#555', font: { size: 16 } }
+                    title: { display: true, text: yAxisLabel.split(',').join(', '), color: '#555', font: { size: 16 } }
                 };
             }
 
@@ -1476,7 +1495,7 @@
             chartCard.className = 'chart-card';
 
             const chartId = `chart-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart: ${selectedColumns.slice(1).join(', ')} by ${selectedColumns[0]}`;
+            const titleText = `${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`;
 
             chartCard.innerHTML = `
                 <div class="chart-header">
@@ -1503,7 +1522,7 @@
             const chartConfig = {
                 type: chartType === 'horizontalBar' ? 'bar' : chartType,
                 data: chartData,
-                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.slice(1).join(', '))
+                options: getChartOptions(chartType, animationConfig, chartOptions.xAxis || selectedColumns[0], selectedColumns.join(', '))
             };
             
             activeCharts[chartId] = new Chart(ctx, chartConfig);
@@ -1522,9 +1541,9 @@
         }
 
         function exportDashboard() {
-            // Functionality to export the entire dashboard (e.g., as PDF or a single image)
-            // This would be more complex, likely involving a server-side rendering or a library like html2canvas
-            showNotification('Export Dashboard functionality is under development.', 'info');
+            showLoading();
+            window.print();
+            hideLoading();
         }
 
         function saveDashboard() {
