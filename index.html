@@ -7,8 +7,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
-    <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
-
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -747,6 +745,9 @@
             body * {
                 visibility: hidden;
             }
+            .leading-page, .leading-page * {
+                visibility: visible;
+            }
             .charts-grid, .charts-grid * {
                 visibility: visible;
             }
@@ -759,15 +760,18 @@
                 flex-direction: column;
             }
             .chart-card {
-                width: 100%;
+                width: 90%;
+                margin: 0 auto;
                 page-break-inside: avoid;
-
             }
         }
 
         @media print and (orientation: landscape) {
             body * {
                 visibility: hidden;
+            }
+            .leading-page, .leading-page * {
+                visibility: visible;
             }
             .charts-grid, .charts-grid * {
                 visibility: visible;
@@ -779,13 +783,18 @@
                 width: 100%;
             }
             .chart-card {
-                width: 100%;
+                width: 90%;
+                margin: 0 auto;
                 page-break-after: always;
             }
         }
     </style>
 </head>
 <body>
+    <div class="leading-page" style="display: none; text-align: center; padding-top: 100px;">
+        <i class="fas fa-chart-line" style="font-size: 5em; color: #3498db;"></i>
+        <h1 style="font-size: 3em; color: #2c3e50;">Report</h1>
+    </div>
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner"></div>
     </div>
@@ -835,10 +844,6 @@
                     <label for="barChart">Bar Chart</label>
                 </div>
                 <div class="chart-option">
-                    <input type="checkbox" id="lineChart" value="line">
-                    <label for="lineChart">Line Chart</label>
-                </div>
-                <div class="chart-option">
                     <input type="checkbox" id="pieChart" value="pie">
                     <label for="pieChart">Pie Chart</label>
                 </div>
@@ -861,7 +866,6 @@
                 <div class="chart-option">
                     <input type="checkbox" id="heatmapChart" value="heatmap">
                     <label for="heatmapChart">Heatmap Chart</label>
-
                 </div>
                 <div class="chart-option">
                     <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
@@ -870,6 +874,10 @@
                 <div class="chart-option">
                     <input type="checkbox" id="mixedChart" value="mixed">
                     <label for="mixedChart">Mixed Chart</label>
+                </div>
+                <div class="chart-option">
+                    <input type="checkbox" id="heatmapChart" value="heatmap">
+                    <label for="heatmapChart">Heatmap Chart</label>
                 </div>
                 <div class="chart-option">
                     <input type="checkbox" id="heatmapChart" value="heatmap">
@@ -989,8 +997,7 @@
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
                     // Only add X-Axis option for charts that use X-Y axis (not pie, doughnut, radar, polarArea)
-                    if (['bar', 'line', 'area', 'bubble', 'mixed', 'horizontalBar', 'heatmap'].includes(chartType)) {
-
+                    if (['bar', 'mixed', 'horizontalBar', 'heatmap'].includes(chartType)) {
                         optionsDiv.innerHTML += `
                             <div class="form-group">
                                 <label for="${chartType}-xAxis">X-Axis</label>
@@ -1290,29 +1297,6 @@
                     }
                     return { datasets };
 
-                case 'heatmap':
-                    const heatmapData = sheetData.map((row, i) => ({
-                        x: row[xAxisColumn],
-                        y: yAxisColumns[0],
-                        d: i,
-                        v: parseFloat(row[yAxisColumns[0]] || 0)
-                    }));
-
-                    datasets.push({
-                        label: `Heatmap of ${yAxisColumns[0]} by ${xAxisColumn}`,
-                        data: heatmapData,
-                        backgroundColor: (context) => {
-                            const value = context.dataset.data[context.dataIndex].v;
-                            const alpha = (value - Math.min(...heatmapData.map(d => d.v))) / (Math.max(...heatmapData.map(d => d.v)) - Math.min(...heatmapData.map(d => d.v)));
-                            return `rgba(52, 152, 219, ${alpha})`;
-                        },
-                        borderColor: 'white',
-                        borderWidth: 1,
-                        width: ({chart}) => (chart.chartArea || {}).width / 5 - 1,
-                        height: ({chart}) => (chart.chartArea || {}).height / 5 - 1
-                    });
-
-                    return { datasets };
 
                 case 'mixed':
                     for (let i = 0; i < yAxisColumns.length; i++) {
@@ -1380,16 +1364,16 @@
                     });
 
                     return { datasets };
-                default: // bar, line, horizontalBar
+                default: // bar, horizontalBar
                     for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
                             label: yAxisColumns[i],
                             data: sheetData.map(row => parseFloat(row[yAxisColumns[i]] || 0)),
-                            backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
+                            backgroundColor: colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
                             fill: false,
-                            tension: chartType === 'line' ? 0.3 : 0
+                            tension: 0
                         });
                     }
                     return { labels, datasets };
