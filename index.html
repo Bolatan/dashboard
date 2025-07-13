@@ -7,6 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
+    <script src="https://unpkg.com/chart.js-chart-matrix@1.1.1/dist/chart.js-chart-matrix.min.js"></script>
+
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -741,7 +743,29 @@
             background: #f39c12;
         }
 
-        @media print {
+        @media print and (orientation: portrait) {
+            body * {
+                visibility: hidden;
+            }
+            .charts-grid, .charts-grid * {
+                visibility: visible;
+            }
+            .charts-grid {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            .chart-card {
+                width: 100%;
+                page-break-inside: avoid;
+
+            }
+        }
+
+        @media print and (orientation: landscape) {
             body * {
                 visibility: hidden;
             }
@@ -755,6 +779,7 @@
                 width: 100%;
             }
             .chart-card {
+                width: 100%;
                 page-break-after: always;
             }
         }
@@ -834,8 +859,9 @@
                     <label for="scatterChart">Scatter Chart</label>
                 </div>
                 <div class="chart-option">
-                    <input type="checkbox" id="areaChart" value="area">
-                    <label for="areaChart">Area Chart</label>
+                    <input type="checkbox" id="heatmapChart" value="heatmap">
+                    <label for="heatmapChart">Heatmap Chart</label>
+
                 </div>
                 <div class="chart-option">
                     <input type="checkbox" id="horizontalBarChart" value="horizontalBar">
@@ -963,7 +989,8 @@
                     optionsDiv.innerHTML = `<h4>${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart Options</h4>`;
 
                     // Only add X-Axis option for charts that use X-Y axis (not pie, doughnut, radar, polarArea)
-                    if (['bar', 'line', 'area', 'mixed', 'horizontalBar', 'heatmap'].includes(chartType)) {
+                    if (['bar', 'line', 'area', 'bubble', 'mixed', 'horizontalBar', 'heatmap'].includes(chartType)) {
+
                         optionsDiv.innerHTML += `
                             <div class="form-group">
                                 <label for="${chartType}-xAxis">X-Axis</label>
@@ -1330,7 +1357,30 @@
                     
                     return { labels: radarLabels, datasets };
 
-                default: // bar, line, area, horizontalBar
+                case 'heatmap':
+                    const heatmapData = sheetData.map((row, i) => ({
+                        x: row[xAxisColumn],
+                        y: yAxisColumns[0],
+                        d: i,
+                        v: parseFloat(row[yAxisColumns[0]] || 0)
+                    }));
+
+                    datasets.push({
+                        label: `Heatmap of ${yAxisColumns[0]} by ${xAxisColumn}`,
+                        data: heatmapData,
+                        backgroundColor: (context) => {
+                            const value = context.dataset.data[context.dataIndex].v;
+                            const alpha = (value - Math.min(...heatmapData.map(d => d.v))) / (Math.max(...heatmapData.map(d => d.v)) - Math.min(...heatmapData.map(d => d.v)));
+                            return `rgba(52, 152, 219, ${alpha})`;
+                        },
+                        borderColor: 'white',
+                        borderWidth: 1,
+                        width: ({chart}) => (chart.chartArea || {}).width / 5 - 1,
+                        height: ({chart}) => (chart.chartArea || {}).height / 5 - 1
+                    });
+
+                    return { datasets };
+                default: // bar, line, horizontalBar
                     for (let i = 0; i < yAxisColumns.length; i++) {
                         datasets.push({
                             label: yAxisColumns[i],
@@ -1338,7 +1388,7 @@
                             backgroundColor: chartType === 'line' ? 'transparent' : colors[i],
                             borderColor: colors[i],
                             borderWidth: 2,
-                            fill: chartType === 'area',
+                            fill: false,
                             tension: chartType === 'line' ? 0.3 : 0
                         });
                     }
