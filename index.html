@@ -6,7 +6,7 @@
     <title>Signaplus Dashboard Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/2.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
@@ -737,6 +737,24 @@
 
         .notification.warning {
             background: #f39c12;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .charts-grid, .charts-grid * {
+                visibility: visible;
+            }
+            .charts-grid {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .chart-card {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -1523,25 +1541,9 @@
         }
 
         function exportDashboard() {
-            const chartsGrid = document.getElementById('chartsGrid');
             showLoading();
-
-            const opt = {
-                margin:       [0.5, 0.5, 0.5, 0.5],
-                filename:     'dashboard.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
-
-            html2pdf().from(chartsGrid).set(opt).save().then(() => {
-                hideLoading();
-                showNotification('Dashboard exported successfully!', 'success');
-            }).catch(error => {
-                console.error('Error exporting dashboard:', error);
-                hideLoading();
-                showNotification('Failed to export dashboard. See console for details.', 'error');
-            });
+            window.print();
+            hideLoading();
         }
 
         function saveDashboard() {
